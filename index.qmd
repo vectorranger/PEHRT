@@ -7,7 +7,7 @@ toc: false
 
 PEHRT assumes that researchers are familiar with their EHR data sources, including documentation, data schema, and coding systems. PEHRT supports both structured data (e.g., coded diagnoses and procedures, prescribed medications, laboratory results) and unstructured text (e.g., clinical notes, radiology reports). EHR data may reside in relational databases or as flat files (CSV/Parquet/JSON) and do not need to conform to a Common Data Model. At minimum, PEHRT requires a unique patient identifier that is used across tables, a timestamp for each event, recorded event and meta data to interpret the record (codes along with their coding system or note text with the note type)
 
-![](chart_PEHRT_new.png){fig-align="center" width="98%"}
+![](images/chart_PEHRT_new.png){fig-align="center" width="98%"}
 
 The PEHRT framework integrates structured and unstructured healthcare data across multiple institutions through three modules: (i) data cleaning, (ii) representation learning. These processes support downstream applications such as phenotyping, risk prediction, and federated learning
 

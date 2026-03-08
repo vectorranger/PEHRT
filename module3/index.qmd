@@ -1,0 +1,5 @@
+---
+title: "Module 3: Automated Harmonization"
+---
+
+Placeholder — content will be moved from m3.qmd in Phase 3.

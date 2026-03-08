@@ -1,8 +1,17 @@
 project:
   type: website
+  render:
+    - "*.qmd"
+    - "setup/*.qmd"
+    - "module1/*.qmd"
+    - "module2/*.qmd"
+    - "module3/*.qmd"
+    - "reference/*.qmd"
+    - "reference/preprocessing/*.qmd"
+    - "reference/embeddings/*.qmd"
 
 website:
-  title: PEHRT
+  title: "PEHRT"
   navbar:
     background: primary
     search: true
@@ -10,35 +19,115 @@ website:
       - icon: house
         text: " "
         href: index.qmd
-      - sidebar:M1
-      - text: "Module 2: Representation Learning"
-        href: m2.qmd
-      - text: "References"
-        href: references.qmd
+      - sidebar:setup
+      - sidebar:module1
+      - sidebar:module2
+      - sidebar:module3
+      - sidebar:reference
+    right:
+      - icon: github
+        href: https://github.com/vectorranger/PEHRT
+        aria-label: GitHub
 
   sidebar:
-    - id: M1
+    - id: setup
+      title: "Getting Started"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents:
+        - text: "Overview & Prerequisites"
+          href: setup/index.qmd
+        - text: "MIMIC-IV Access"
+          href: setup/mimic-access.qmd
+        - text: "Workspace Setup"
+          href: setup/workspace.qmd
+        - text: "Data Overview"
+          href: setup/data-overview.qmd
+
+    - id: module1
       title: "Module 1: Data Preprocessing"
       style: "docked"
       background: light
       collapse-level: 2
-      contents: 
-        - EHR-Pipeline-Part1.ipynb
-        - EHR-Pipeline-Part2.ipynb
-        - EHR-Pipeline-Part3.ipynb
-        - EHR-Pipeline-Part4.ipynb
-        - EHR-Pipeline-Part5.ipynb
-    
- # optional, tune to taste
+      contents:
+        - text: "Overview"
+          href: module1/index.qmd
+        - text: "Step 1: Data Cleaning"
+          href: module1/data-cleaning.qmd
+        - text: "Step 2: Code Rollup"
+          href: module1/code-rollup.qmd
+        - text: "Step 3: NLP Processing"
+          href: module1/nlp.qmd
+        - text: "Step 4: Cohort Creation"
+          href: module1/cohort-creation.qmd
+
+    - id: module2
+      title: "Module 2: Representation Learning"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents:
+        - text: "Representation Learning"
+          href: module2/index.qmd
+
+    - id: module3
+      title: "Module 3: Harmonization"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents:
+        - text: "Automated Harmonization"
+          href: module3/index.qmd
+
+    - id: reference
+      title: "Function Reference"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents:
+        - text: "All Functions"
+          href: reference/index.qmd
+        - section: "Preprocessing"
+          contents:
+            - text: "clean_data_by_batch"
+              href: reference/preprocessing/clean-data-by-batch.qmd
+            - text: "summarize"
+              href: reference/preprocessing/summarize.qmd
+            - text: "summarize_unmapped"
+              href: reference/preprocessing/summarize-unmapped.qmd
+            - text: "get_code_counts_per_patient"
+              href: reference/preprocessing/get-code-counts-per-patient.qmd
+            - text: "get_month"
+              href: reference/preprocessing/get-month.qmd
+            - text: "get_monthly_counts"
+              href: reference/preprocessing/get-monthly-counts.qmd
+        - section: "Embeddings"
+          contents:
+            - text: "BONMI"
+              href: reference/embeddings/bonmi.qmd
+            - text: "BONMI Package"
+              href: reference/embeddings/bonmi-package.qmd
+            - text: "Procrustes"
+              href: reference/embeddings/procrustes.qmd
+            - text: "embedding"
+              href: reference/embeddings/embedding.qmd
+            - text: "TextEncoder"
+              href: reference/embeddings/text-encode.qmd
+            - text: "get_AUC_MS"
+              href: reference/embeddings/get-auc-ms.qmd
 
 format:
   html:
     page-layout: full
     grid:
-      body-width: 1000px 
+      body-width: 1000px
     theme: cosmo
     css: styles.css
     toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
 
 execute:
   freeze: auto

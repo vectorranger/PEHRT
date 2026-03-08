@@ -1,0 +1,5 @@
+---
+title: "Module 2: Representation Learning"
+---
+
+Placeholder — content will be moved from m2.qmd in Phase 3.

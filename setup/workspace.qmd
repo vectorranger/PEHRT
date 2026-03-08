@@ -1,0 +1,5 @@
+---
+title: "Workspace Setup"
+---
+
+Setting up your compute environment and directory structure.

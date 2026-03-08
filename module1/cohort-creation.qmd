@@ -1,0 +1,5 @@
+---
+title: "Step 4: Cohort Creation"
+---
+
+Defining disease cohorts and creating patient-level feature matrices.
