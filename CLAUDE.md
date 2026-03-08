@@ -42,3 +42,8 @@ The rendered site outputs to `_site/`. Quarto uses `execute: freeze: auto` so co
 
 - `torch` — PLM-based embedding generation
 - `text_encode.py` — `TextEncoder` class wrapping HuggingFace models (CODER, SapBERT, BioBERT, PubMedBERT)
+
+## Workflow Rules
+
+- **Commit and push frequently.** After completing each meaningful unit of work, commit changes to git with a clear, descriptive commit message and push to GitHub. Do not let work accumulate uncommitted — treat every logical milestone (new file, completed edit, bug fix, refactor) as a commit point.
+- Remote: `origin` → `https://github.com/vectorranger/PEHRT.git` (branch: `main`)
