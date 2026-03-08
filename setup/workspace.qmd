@@ -2,4 +2,134 @@
 title: "Workspace Setup"
 ---
 
-Setting up your compute environment and directory structure.
+## Setting Up Your Compute Environment
+
+1. Create a workspace to download and process MIMIC-IV data
+2. Download all the tutorial notebooks into the workspace
+3. Create a virtual environment and install the required Python libraries
+4. Download the MIMIC data into the workspace
+
+## Directory Structure
+
+```plaintext
+EHR_TUTORIAL_WORKSPACE/
+├── processed_data/                # Outputs after cleaning & standardization
+│
+├── raw_data/                      # Original downloaded MIMIC data
+│   ├── note_data/
+│   │   └── physionet.org/
+│   │       └── files/
+│   │           └── mimic-iv-note/
+│   │               └── 2.2/
+│   │                   └── note/
+│   │                       └── *.csv.gz
+│   │
+│   └── structured_data/
+│       └── physionet.org/
+│           └── files/
+│               └── mimiciv/
+│                   └── 3.1/
+│                       ├── hosp/
+│                       │   └── *.csv.gz
+│                       └── icu/
+│                           └── *.csv.gz
+│
+└── scripts/                       # Tutorial ipynb notebooks & mapping files
+    └── EHR-Processing-Tutorial-main/
+        ├── meta_files/
+        └── Rollup_Mappings/
+```
+
+## Setup Script
+
+::: {.callout-warning}
+## Set Your Workspace Path
+Before running the script below, update the `LOCATION` variable to the directory where you want to create the workspace.
+:::
+
+The following script can be run on Unix-based systems to set up the workspace:
+
+```bash
+#!/bin/bash
+
+# Set the location variable to the path where you want to create the MIMIC workspace
+LOCATION="/path/to/your/workspace"
+
+# If you would like to download and work in your home directory, you can update above to LOCATION="$HOME"
+
+# Check if the workspace folder already exists
+if [ -d "${LOCATION}/EHR_TUTORIAL_WORKSPACE" ]; then
+  echo "EHR_TUTORIAL_WORKSPACE folder already exists here ${LOCATION}/EHR_TUTORIAL_WORKSPACE"
+  exit 0
+fi
+
+# Create the workspace directory
+mkdir "${LOCATION}/EHR_TUTORIAL_WORKSPACE"
+echo "Workspace has been created here ${LOCATION}/EHR_TUTORIAL_WORKSPACE"
+
+# Create the workspace subdirectories
+echo "Creating raw_data, processed_data, and scripts subdirectories"
+mkdir -p "${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/structured_data" \
+         "${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/note_data" \
+         "${LOCATION}/EHR_TUTORIAL_WORKSPACE/processed_data" \
+         "${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts"
+echo "Workspace has been set up here ${LOCATION}/EHR_TUTORIAL_WORKSPACE"
+
+# Download and extract MIMIC Data Prep scripts from GitHub
+echo "Downloading and extracting MIMIC Data Prep scripts from GitHub..."
+wget https://github.com/apvidul/EHR-Processing-Tutorial/archive/refs/heads/main.zip -O mimic-data-prep.zip
+unzip -q mimic-data-prep.zip -d "${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts"
+mv "${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/EHR-Processing-Tutorial-main/"* "${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/"
+
+# Cleanup unnecessary files and folders
+rm -rf mimic-data-prep.zip "${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/EHR-Processing-Tutorial-main"
+
+echo "Creating the Conda environment ehr_tutorial"
+conda create --yes --name ehr_tutorial pandas wordcloud jupyter tqdm matplotlib
+
+# Downloading the structured MIMIC data into raw_data/structured_data
+wget -r -N -c -np --user ${PHYSIONET_USERNAME} --password ${PHYSIONET_PASSWORD} \
+  https://physionet.org/files/mimiciv/3.1/ \
+  -P ${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/structured_data
+
+# Downloading the note data into raw_data/note_data
+wget -r -N -c -np --user ${PHYSIONET_USERNAME} --password ${PHYSIONET_PASSWORD} \
+  https://physionet.org/files/mimic-iv-note/2.2/ \
+  -P ${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/note_data
+```
+
+::: {.callout-note}
+## Environment Variables
+Set `PHYSIONET_USERNAME` and `PHYSIONET_PASSWORD` in your shell before running the download commands:
+
+```bash
+export PHYSIONET_USERNAME="your_username"
+export PHYSIONET_PASSWORD="your_password"
+```
+:::
+
+## Unzipping the Data
+
+Once MIMIC is downloaded, the data is in `.csv.gz` format. Set the `WORKSPACE_DIR` variable and run:
+
+```python
+import os
+
+# Set your workspace location here
+WORKSPACE_DIR = "/path/to/your/EHR_TUTORIAL_WORKSPACE"
+
+# Unzip structured data
+hosp_gz_files_path = os.path.join(WORKSPACE_DIR, "raw_data", "structured_data",
+    "physionet.org", "files", "mimiciv", "3.1", "hosp")
+!gunzip {hosp_gz_files_path}/*.gz
+
+# Unzip note data
+note_gz_files_path = os.path.join(WORKSPACE_DIR, "raw_data", "note_data",
+    "physionet.org", "files", "mimic-iv-note", "2.2", "note")
+!gunzip {note_gz_files_path}/*.gz
+```
+
+::: {.callout-tip}
+## Verify Your Setup
+After setup, your `raw_data/structured_data/.../hosp/` directory should contain CSV files including: `patients.csv`, `admissions.csv`, `diagnoses_icd.csv`, `prescriptions.csv`, `labevents.csv`, `hcpcsevents.csv`, `procedures_icd.csv`, and their corresponding data dictionary files (`d_icd_diagnoses.csv`, etc.).
+:::

@@ -2,4 +2,24 @@
 title: "MIMIC-IV Access"
 ---
 
-How to gain access to the MIMIC-IV dataset via PhysioNet.
+## Gaining Access to MIMIC-IV Dataset
+
+MIMIC-IV is a deidentified EHR dataset sourced from BIDMC Hospital. To gain access, follow these steps:
+
+::: {.callout-important}
+## Before You Begin
+The approval process can take several days. Start this step early.
+:::
+
+**Step 1.** Create a PhysioNet account and become a credentialed user. Register [here](https://physionet.org/register/).
+
+**Step 2.** Complete the required training listed [here](https://physionet.org/content/mimiciv/view-required-training/3.1/) and submit your certificates [here](https://physionet.org/settings/training/).
+
+**Step 3.** Sign the Data User Agreement [here](https://physionet.org/login/?next=/sign-dua/mimiciv/3.1/).
+
+Once your access is approved, you will receive a notification via your registered email.
+
+::: {.callout-tip}
+## MIMIC Resources
+For users new to EHR data, we recommend watching the MIMIC data tutorial [here](https://mimic.mit.edu/docs/iv/tutorials/video/). Comprehensive documentation is available at [mimic.mit.edu](https://mimic.mit.edu/docs/iv/).
+:::

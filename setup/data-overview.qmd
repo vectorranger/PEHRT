@@ -1,5 +1,298 @@
 ---
 title: "Data Overview"
+execute:
+  enabled: false
 ---
 
-Overview of EHR data structure, MIMIC-IV modules, and data exploration.
+After gaining access, it is essential to develop a thorough understanding of the EHR data to assemble the elements of interest and create a dataset aligned with the research objectives. This typically involves answering the following questions:
+
+1. **What data is available, and where is it stored?**
+2. **Which data elements are relevant, and how are they defined?**
+3. **How is the data organized and linked across files and tables?**
+
+These questions are typically addressed by consulting institution-specific EHR documentation or the warehouse data manager. For MIMIC-IV, comprehensive documentation is available [here](https://mimic.mit.edu/docs/iv/).
+
+::: {.callout-tip}
+For users new to EHR data, we highly recommend watching the MIMIC data tutorial [here](https://mimic.mit.edu/docs/iv/tutorials/video/).
+:::
+
+## What Data is Available?
+
+Electronic Health Record (EHR) data can take many forms. For example, billing information and vital signs are typically recorded as tabular data, clinical notes are in free text format, ECG recordings generate waveform data, and procedures such as X-rays generate image data.
+
+MIMIC-IV data comes in "modules" based on the source of data generation:
+
+- [hosp](https://mimic.mit.edu/docs/iv/modules/hosp/) — Hospital-level data for patients, including labs, microbiology, and electronic medication administration records
+- [icu](https://mimic.mit.edu/docs/iv/modules/icu/) — ICU-level data, including event tables identical in structure to MIMIC-III
+- [ed](https://mimic.mit.edu/docs/iv/modules/ed/) — Data from the emergency department
+- [cxr](https://mimic.mit.edu/docs/iv/modules/cxr/) — Lookup tables and metadata from MIMIC-CXR
+- [note](https://physionet.org/content/mimic-iv-note/2.2/) — De-identified free-text clinical notes
+
+| Data type | Data contents | Available at | Major tables/files | Primary timestamps |
+|---|---|---|---|---|
+| Diagnoses | ICD-9/10 diagnosis codes per admission | MIMIC-IV (hosp) | `diagnoses_icd`, `d_icd_diagnoses` | Admission window (`admittime`, `dischtime`) |
+| Procedures | ICD-9/10-PCS, CPT/HCPCS events | MIMIC-IV (hosp) | `procedures_icd`, `hcpcsevents`, `d_icd_procedures`, `d_hcpcs` | Admission window; event dates |
+| Medications | Orders & administrations | MIMIC-IV (hosp) | `prescriptions`, `emar`, `emar_detail` | `starttime`, `stoptime`, `charttime` |
+| Laboratory results | Results + units | MIMIC-IV (hosp) | `labevents`, `d_labitems` | `charttime` |
+| Microbiology | Cultures, organisms, sensitivities | MIMIC-IV (hosp) | `microbiologyevents` | `charttime` |
+| ICU flowsheets | Vitals, assessments, outputs | MIMIC-IV (icu) | `chartevents`, `outputevents`, `icustays`, `d_items` | `charttime` |
+| Clinical notes | Discharge, radiology, etc. | MIMIC-IV-Note | `note` | `charttime` |
+| Chest X-ray images | DICOM/JPG + metadata | MIMIC-CXR | Image files + metadata CSVs | Study/acquisition time |
+| ECG waveforms | 10-sec, 12-lead diagnostic ECG | MIMIC-IV-ECG | WFDB waveform files + metadata | Acquisition time |
+| ED stays | Triage, meds, vitals | MIMIC-IV-ED | `edstays`, `triage`, `vitalsign` | ED times |
+
+For this tutorial, we work with the MIMIC-IV **hosp** and **note** modules.
+
+## Key Data Elements
+
+| Key data element | Description | Examples in MIMIC-IV |
+|---|---|---|
+| Unique Patient ID | Patient identifier used across all tables and encounters | `subject_id` |
+| Event | A clinical record that something happened/was recorded | Diagnoses (`diagnoses_icd`); Meds (`prescriptions`); Labs (`labevents`); Procedures (`procedures_icd`, `hcpcsevents`) |
+| Time | When the event occurred or was recorded | Event times (`charttime`, `starttime`, `stoptime`); admission window (`admittime`, `dischtime`) from `admissions` |
+
+## MIMIC-IV hosp Module Tables
+
+| Type | Table | Purpose | Key element(s) | Primary code fields | Primary time field(s) | Join keys |
+|---|---|---|---|---|---|---|
+| Data Dictionary | `d_hcpcs` | CPT/HCPCS code definitions | Codes | `hcpcs_cd` | — | `hcpcsevents.hcpcs_cd` |
+| Data Dictionary | `d_icd_diagnoses` | ICD-9/10 diagnosis code definitions | Codes | `icd_code`, `icd_version` | — | `diagnoses_icd` |
+| Data Dictionary | `d_icd_procedures` | ICD-9/10 procedure code definitions | Codes | `icd_code`, `icd_version` | — | `procedures_icd` |
+| Data Dictionary | `d_labitems` | Lab item dictionary | Codes | `itemid` | — | `labevents.itemid` |
+| Event Table | `diagnoses_icd` | Billed ICD diagnosis codes per hospitalization | Patient ID, Event, Codes | `icd_code`, `icd_version` | Admission window | `subject_id`, `hadm_id` |
+| Event Table | `prescriptions` | Medication orders | Patient ID, Event, Time | Local drug fields / `ndc` | `starttime`, `stoptime` | `subject_id`, `hadm_id` |
+| Event Table | `labevents` | Laboratory measurements | Patient ID, Event, Time, Codes | `itemid` | `charttime` | `subject_id`, `hadm_id` |
+| Event Table | `hcpcsevents` | CPT/HCPCS billed events | Patient ID, Event, Time, Codes | `hcpcs_cd` | `chartdate` | `subject_id`, `hadm_id` |
+| Event Table | `procedures_icd` | ICD-9/10-PCS billed procedures | Patient ID, Event, Codes | `icd_code`, `icd_version` | Admission window | `subject_id`, `hadm_id` |
+| Patient Metadata | `admissions` | Admission episodes | Patient ID, Time | — | `admittime`, `dischtime` | `subject_id`, `hadm_id` |
+| Patient Metadata | `transfers` | Unit/ward movements | Patient ID, Time | — | `intime`, `outtime` | `subject_id`, `hadm_id` |
+| Patient Metadata | `patients` | Demographics and anchor fields | Patient ID | — | date of death (opt.) | `subject_id` |
+
+## Linking Data Across Tables
+
+In EHR data, information is spread across multiple tables. Three major identifiers are used in MIMIC:
+
+- **`SUBJECT_ID`** — Patient-level identifier. The `patients` table contains demographics for each unique patient.
+- **`HADM_ID`** — Hospital admission-level identifier. Each unique hospital admission gets a unique ID.
+- **`STAY_ID`** — ICU stay identifier. All ICU admissions within 24 hours of each other are grouped.
+
+## Exploring the Data
+
+We now explore individual tables in the MIMIC-IV hosp module and summarize them, starting with patient demographics and then diagnoses, medications, labs, and procedures.
+
+::: {.callout-important}
+One critical aspect of processing EHR data is ensuring that you account for every EHR code.
+:::
+
+### Patient Demographics
+
+```{python}
+import os
+import pandas as pd
+from collections import defaultdict
+import heapq
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+WORKSPACE_DIR = "/path/to/your/EHR_TUTORIAL_WORKSPACE"
+
+demographics_file = os.path.join(WORKSPACE_DIR, "raw_data", "structured_data",
+    "physionet.org", "files", "mimiciv", "3.1", "hosp", "patients.csv")
+
+demographics = pd.read_csv(demographics_file, dtype=str)
+demographics.head()
+```
+
+```
+  subject_id gender anchor_age anchor_year anchor_year_group         dod
+0   10000032      F         52        2180       2014 - 2016  2180-09-09
+1   10000048      F         23        2126       2008 - 2010         NaN
+2   10000058      F         33        2168       2020 - 2022         NaN
+3   10000068      F         19        2160       2008 - 2010         NaN
+4   10000084      M         72        2160       2017 - 2019  2161-02-13
+```
+
+There are **364,627** patients in the MIMIC-IV hospital dataset. Around **52%** of the cohort are female. Ages over 89 are depicted as 90+ to comply with HIPAA privacy regulations, and no age data exists for patients under 18.
+
+```{python}
+demographics.describe()
+print("Missing records:", demographics.isna().sum())
+
+# Age distribution
+age_counts = demographics['anchor_age'].value_counts().sort_index()
+plt.figure(figsize=[12, 8])
+plt.bar(age_counts.index, age_counts.values, color='skyblue')
+plt.xticks(range(0, 100, 10))
+plt.xlabel('Age (years)')
+plt.ylabel('Number of Patients')
+plt.title('Patient Age Distribution')
+plt.show()
+
+# Gender distribution
+gender_counts = demographics['gender'].value_counts()
+plt.figure(figsize=(8, 6))
+plt.bar(gender_counts.index, gender_counts.values,
+        color=[{'F': 'lightpink', 'M': 'lightblue'}[g] for g in gender_counts.index])
+plt.xlabel('Gender')
+plt.ylabel('Number of Patients')
+plt.title('Patient Gender Distribution')
+plt.show()
+```
+
+### Diagnoses Data
+
+In U.S. healthcare systems, diagnoses are documented using **ICD (International Classification of Diseases)** codes. Two versions are in use:
+
+- **ICD-9**: used until **October 1, 2015**
+- **ICD-10**: starting **October 1, 2015**
+
+The same diagnosis uses different codes depending on when it was recorded. For example, essential hypertension is `4019` under ICD-9 and `I10` under ICD-10.
+
+```{python}
+diagnoses_icd_file = os.path.join(WORKSPACE_DIR, "raw_data", "structured_data",
+    "physionet.org", "files", "mimiciv", "3.1", "hosp", "diagnoses_icd.csv")
+diagnoses_icd = pd.read_csv(diagnoses_icd_file, dtype=str)
+diagnoses_icd.head()
+```
+
+```
+  subject_id   hadm_id seq_num icd_code icd_version
+0   10000032  22595853       1     5723           9
+1   10000032  22595853       2    78959           9
+2   10000032  22595853       3     5715           9
+3   10000032  22595853       4    07070           9
+4   10000032  22595853       5      496           9
+```
+
+There are **223,291** patients in the `diagnoses_icd` table (**68%** of total patients). The remaining patients were seen only in the emergency department.
+
+#### Batch Summarization Function
+
+For larger datasets (e.g., lab data with 158M+ rows), we define a batch summarization function:
+
+```{python}
+def get_basic_summary(filepath, cols_to_summarize, batch_size):
+    frequencies = defaultdict(lambda: defaultdict(int))
+    non_null_records_count = defaultdict(int)
+    total_records_count = 0
+
+    for batch in pd.read_csv(filepath, usecols=cols_to_summarize,
+                             chunksize=batch_size, dtype=str):
+        total_records_count += len(batch)
+        for column in batch.columns:
+            non_null_records_count[column] += batch[column].notnull().sum()
+            value_counts = batch[column].value_counts()
+            for value, count in value_counts.items():
+                frequencies[column][value] += count
+
+    freq_table = [
+        (column, len(frequencies[column]), non_null_records_count[column])
+        for column in frequencies
+    ]
+    summary = pd.DataFrame(freq_table,
+                           columns=["Column_Name", "Unique_Values", "Non_Null_Records"])
+    return {'summary': summary, 'column_freq': frequencies, 'records': total_records_count}
+```
+
+#### Patient-Level Code Counts
+
+To estimate disease cohort size, count unique `(subject_id, icd_code)` pairs:
+
+```{python}
+icd_counts = (
+    diagnoses_icd
+    .groupby(['icd_code', 'icd_version'], as_index=False)['subject_id']
+    .nunique()
+    .rename(columns={'subject_id': 'patient_count'})
+    .sort_values('patient_count', ascending=False)
+)
+icd_counts.head()
+```
+
+```
+      icd_code icd_version  patient_count
+2801      4019           9          52360
+12953      I10          10          48611
+10049     E785          10          45431
+1342      2724           9          35210
+28363   Z87891          10          32523
+```
+
+::: {.callout-warning}
+## ICD Version Transition
+If your study spans the Oct 2015 transition, include both ICD-9 and ICD-10 code sets. For example, essential hypertension is `4019` (ICD-9) and `I10` (ICD-10). See [ICD-9 vs ICD-10 comparison](https://www.ama-assn.org/media/7546/download).
+:::
+
+#### Data Dictionary Lookup
+
+Joining with `d_icd_diagnoses` provides human-readable code descriptions:
+
+```{python}
+d_icd_path = os.path.join(WORKSPACE_DIR, "raw_data", "structured_data",
+    "physionet.org", "files", "mimiciv", "3.1", "hosp", "d_icd_diagnoses.csv")
+
+sorted_icdcode_frequencies_w_def = (
+    icd_counts
+    .merge(
+        pd.read_csv(d_icd_path, dtype=str, usecols=["icd_code", "icd_version", "long_title"]),
+        on=["icd_code", "icd_version"], how="left"
+    )
+    .sort_values("patient_count", ascending=False)
+)
+sorted_icdcode_frequencies_w_def.head()
+```
+
+```
+  icd_code icd_version                               long_title  patient_count
+0     4019           9       Unspecified essential hypertension          52360
+1      I10          10         Essential (primary) hypertension          48611
+2     E785          10              Hyperlipidemia, unspecified          45431
+3     2724           9     Other and unspecified hyperlipidemia          35210
+4   Z87891          10  Personal history of nicotine dependence          32523
+```
+
+### Reusable Summary Functions
+
+We define two reusable functions for generating comprehensive summaries across all data types:
+
+```{python}
+def generate_wordcloud(sorted_freq_df, code_desc_column):
+    word_freq = {}
+    for index, row in sorted_freq_df.iterrows():
+        title = row[code_desc_column]
+        count = row['counts']
+        word_freq[title] = word_freq.get(title, 0) + count
+
+    wordcloud = WordCloud(
+        width=1200, height=800, background_color='white',
+        colormap='viridis', prefer_horizontal=0.9, max_words=100,
+        contour_width=1, contour_color='black'
+    ).generate_from_frequencies(word_freq)
+
+    plt.figure(figsize=(12, 8))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    plt.tight_layout(pad=0)
+    plt.show()
+    return wordcloud
+
+
+def file_line_count(filepath):
+    count = 0
+    with open(filepath, 'r') as file:
+        for line in file:
+            count += 1
+    return count
+```
+
+These functions are then applied to summarize **Diagnoses**, **Procedures (HCPCS + ICD)**, **Medications (NDC)**, and **Labs** — producing summary CSVs and wordcloud visualizations saved to `processed_data/Summary/`.
+
+### Summary Output
+
+At the end, you will have the following files generated under `EHR_TUTORIAL_WORKSPACE/processed_data/Summary/`:
+
+- `diagnoses_basic_summary.csv`, `diagnoses_icd_wordcloud.png`
+- `hcpcsevents_basic_summary.csv`, `hcpcsevents_wordcloud.png`
+- `procedures_icd_basic_summary.csv`, `procedures_icd_wordcloud.png`
+- `prescriptions_basic_summary.csv`, `prescriptions_wordcloud.png`
+- `labevents_basic_summary.csv`, `labevents_wordcloud.png`
