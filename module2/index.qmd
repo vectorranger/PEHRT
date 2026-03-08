@@ -1,5 +1,357 @@
 ---
 title: "Module 2: Representation Learning"
+execute:
+  enabled: false
 ---
 
-Placeholder — content will be moved from m2.qmd in Phase 3.
+After data pre-processing, PEHRT performs representation learning for various downstream tasks. A co-occurrence matrix is built by tracking patient events over a set time for each code and CUI. This matrix is then converted into a pointwise mutual information (SPPMI) matrix, which shows relationships among codes and CUIs. By applying singular value decomposition (SVD), embedding vectors are created for further analysis, such as building medical knowledge graphs or selecting features for risk prediction.
+
+::: {.callout-note}
+Privacy Note: To uphold ethical standards and protect confidentiality, the explicit names of individuals in related pairs are not disclosed in this tutorial, associated datasets. All examples and outputs use anonymized identifiers to represent relationships.
+:::
+
+## Step 2.1: EHR Embedding training
+
+Here we use the rolled up MIMIC data which are the output from Module 1 Step 2. This script combines them into a single data frame for further analysis.
+
+```
+├─Diagnoses
+│      rolledup_batch1.csv
+│      rolledup_batch2.csv
+│      rolledup_batch3.csv
+│      rolledup_batch4.csv
+│      rolledup_batch5.csv
+│      rolledup_batch6.csv
+│      rolledup_batch7.csv
+│      rolledup_batch8.csv
+├─Labs
+|      rolledup_batch1.csv
+│      rolledup_batch2.csv
+│      rolledup_batch3.csv
+│      rolledup_batch4.csv
+│      rolledup_batch5.csv
+│      rolledup_batch6.csv
+│      rolledup_batch7.csv
+│      rolledup_batch8.csv
+├─Medication
+|      rolledup_batch1.csv
+│      rolledup_batch2.csv
+│      rolledup_batch3.csv
+│      rolledup_batch4.csv
+│      rolledup_batch5.csv
+│      rolledup_batch6.csv
+│      rolledup_batch7.csv
+│      rolledup_batch8.csv
+├─Procedures
+|      rolledup_batch1.csv
+│      rolledup_batch2.csv
+│      rolledup_batch3.csv
+│      rolledup_batch4.csv
+│      rolledup_batch5.csv
+│      rolledup_batch6.csv
+│      rolledup_batch7.csv
+│      rolledup_batch8.csv
+```
+
+::: {.callout-note}
+The following code examples in this part are written using the R programming language.
+:::
+
+```{r}
+### Load data
+library(dplyr)
+folder_path <- "/home/EHR/monthly_counts_mimic/grouped/Diagnoses"
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+diagnoses_dataframes <- lapply(csv_files, read.csv)
+
+folder_path <- "/home/EHR/monthly_counts_mimic/grouped/Labs"
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+labs_dataframes <- lapply(csv_files, read.csv)
+
+folder_path <- "/home/EHR/monthly_counts_mimic/grouped/Medication"
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+medication_dataframes <- lapply(csv_files, read.csv)
+
+folder_path <- "/home/EHR/monthly_counts_mimic/grouped/Procedures"
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+procedures_dataframes <- lapply(csv_files, read.csv)
+
+### Combine dataframe
+combined_batches <- list()
+
+for (i in 1:8) {
+  diag <- diagnoses_dataframes[[i]]
+  labs <- labs_dataframes[[i]]
+  meds <- medication_dataframes[[i]]
+  procs <- procedures_dataframes[[i]]
+
+  combined <- rbind(diag, labs, meds, procs)
+
+  combined_batches[[i]] <- combined
+}
+
+all_combined_data <- bind_rows(combined_batches)
+```
+
+This tutorial demonstrates how to use our own [nlpembeds](https://cran.r-project.org/web/packages/nlpembeds/) library to generate co-occurrence matrices, SPPMI matrices, and embeddings.
+
+```{r}
+install.packages("nlpembeds")
+### SVD_PMI Embedding
+library(nlpembeds)
+
+get_svd_pmi_embedding <- function(combined_df){
+  # build_df_cooc, get_pmi, get_svd functions are from nlpembeds package
+  spm_cooc = build_df_cooc(combined_df)
+  m_pmi = get_pmi(spm_cooc)
+  m_svd = get_svd(m_pmi, embedding_dim = 1400)
+  return(m_svd)
+}
+
+all_combined_m_svd <- get_svd_pmi_embedding(all_combined_data)
+
+```
+
+The SVD is computed with "random SVD", an efficient approximation of truncated SVD, in which only the first principal components are returned. It is computed with the rsvd package, and the author suggests that the number of dimensions requested k should follow: k < n / 4, where n is the number of features, for it to be efficient, and that otherwise one should rather use either SVD or truncated SVD. Given that the matrix m_pmi has dimensions 5809*5809, we pick a rank of 1400 here.
+
+## Step 2.2: PLM-based embeddings
+
+EHR data can be effectively represented using Pre-trained Language Models (PLMs) by leveraging the descriptions or names of codes and CUIs.
+
+::: {.callout-note}
+The following code examples in this part are written using the Python programming language.
+:::
+
+To learn more about the TextEncoder class, visit the [documentation](../reference/embeddings/text-encode.qmd).
+
+The input file `codifed_codes_desc.csv` is a CSV file where the first column contains different codes and the second column contains the corresponding description.
+
+```{{python}}
+import pandas as pd
+import os
+import torch
+from text_encode import TextEncoder, config_dict
+from collections import defaultdict
+
+# Step 1: Load the definitions CSV into a Pandas DataFrame
+df = pd.read_csv('codifed_codes_desc.csv')
+df.head()
+```
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>term</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>LOINC:1000-9</td>
+      <td>DBG Ab SerPl BPU Ql</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>LOINC:100019-9</td>
+      <td>ALK gene Mut Anl Bld/T</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>LOINC:100020-7</td>
+      <td>GNA11 gene Mut Anl Bld/T</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>LOINC:100021-5</td>
+      <td>GNAQ gene Mut Anl Bld/T</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>LOINC:100022-3</td>
+      <td>IDH1 gene Mut Anl Bld/T</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+```{{python}}
+# Step 2: Separate the dictionary keys (codes) and values (descriptions) into lists
+code_name = df['id'].tolist()
+code_desc = df['term'].tolist()
+
+# Configuration parameters for generating embeddings
+# Available models from Hugging Face
+configs = (
+    "coder", # GanjinZero/coder_eng
+    "coder_pp", # GanjinZero/coder_eng_pp
+    "sapbert", # cambridgeltl/SapBERT-from-PubMedBERT-fulltext
+    "pubmedbert", # microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext
+    "biobert", # monologg/biobert_v1.1_pubmed
+    "bert", # bert-base-uncased
+    "coder_all" # GanjinZero/coder_all
+)
+
+config = "coder"  # Select the embedding model configuration
+method = "CLS"  # Specify the embedding method
+output_data_dir = "./"  # Directory to save the output embeddings
+
+print(f"Generating embeddings for {config} with {method} embedding...")
+
+# Step 3: Set up embedding parameters
+embed_params = {
+    "normalize": True,  # Normalize embeddings
+    "summary_method": method  # Summary method for embedding generation
+}
+output_file_name = f"{config}_{embed_params['summary_method']}"
+output_file_path = os.path.join(output_data_dir, output_file_name)
+
+# Step 4: Initialize the TextEncoder and generate embeddings
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Use GPU if available
+encoder = TextEncoder(config, device)
+embeddings = encoder.get_embed(code_desc, **embed_params)
+
+# Step 5: Save the embeddings to a file
+with open(output_file_path, "w") as f:
+    for cid, embedding in zip(code_name, embeddings):
+        line = [str(cid)] + [str(each) for each in embedding]  # Combine code ID and embedding values
+        line = ",".join(line) + "\n"  # Format as a comma-separated line
+        f.write(line)
+```
+
+
+
+## Step 2.3: Joint multi-institution EHR embedding training
+
+The Block-wise Overlapping Noisy Matrix Integration [(BONMI)](../reference/embeddings/bonmi-package.qmd) algorithm helps combine data from different sources by aligning and completing SPPMI (Pointwise Mutual Information) matrices.
+
+It populates this matrix by averaging SPPMI values from contributing institutions when overlaps exist and imputing missing values using orthogonal transformations. This approach enables the creation of a shared data representation, facilitating collaborative analysis across diverse datasets.
+
+::: {.callout-note}
+The following code examples in this part are written using the R programming language.
+:::
+
+Here we use same rolled up MIMIC data as above. The following script performs necessary preprocessing steps for BONMI analysis.
+
+```{r}
+### BONMI
+get_BONMI_embedding <- function(input_dfs){
+  # Initialize variables
+  W = list()
+  s = 0
+  r = 1400
+  for(input_df in input_dfs) {
+    s = s + 1
+    spm_cooc = build_df_cooc(input_df)
+    m_pmi = get_pmi(spm_cooc)
+    W[[s]] = m_pmi
+  }
+
+  # Apply the BONMI algorithm
+  Xhat <- BONMI(W, r, weights=NULL, rsvd.use=FALSE)
+  return(Xhat)
+}
+
+combined_m_BONMI <- get_BONMI_embedding(combined_batches)
+```
+
+## Step 2.4: Embedding Validation
+
+::: {.callout-note}
+The following code examples in this part are written using the R programming language.
+:::
+
+To evaluate the performance of our similarity-based prediction model, we use known concept relationships as true positives. In clinical contexts, these relationships are curated by experts. AUC (Area Under the Curve) is a key metric for assessing model accuracy, requiring an equal number of true positives and true negatives—so for each known pair, we generate a random comparison.
+
+The known pairs dataset is derived from the Unified Medical Language System (UMLS), and access to this data requires possession of a valid UMLS Metathesaurus License.
+
+```{r}
+# Load the known pairs data from UMLS
+load(file='/home/EHR/code_share/code_share/PairsAlltypeUMLS_05122024.Rdata')
+source('/home/EHR/code_share/code_share/get_AUC_MS.R')
+# Define evaluate function
+Myeval<-function(embed){
+  dict <- data.frame(code = rownames(embed))
+  dict$group <- sapply(dict$code, function(x) strsplit(x,":")[[1]][1])
+  AUC <- get_AUC_embed(embed = embed, pairs = pairs, WithNull = FALSE, dict = dict,
+                       normalize = FALSE, interested_code = NULL, nmax = 10000, myseed = 214)
+  sim = AUC$`codi-codi(similar)`
+  rel = AUC$`codi-codi(related)`
+  sim = sim[sim[,2]>50,]
+  rel = rel[rel[,2]>50,]
+
+  AUC$weighted_sim = c('auc'=sum(sim[,1]*sim[,2])/sum(sim[,2]),'num'=sum(sim[,2]),'dim'=nrow(embed))
+  AUC$weighted_rel = c('auc'=sum(rel[,1]*rel[,2])/sum(rel[,2]),'num'=sum(rel[,2]),'dim'=nrow(embed))
+  AUC
+}
+
+# Evaluate the AUC of SVD_PMI and BONMI
+auc.SVD_PMI = Myeval(all_combined_m_svd)
+auc.BONMI = Myeval(combined_m_BONMI)
+round(auc.SVD_PMI$weighted_sim, 3)
+round(auc.SVD_PMI$weighted_rel, 3)
+round(auc.BONMI$weighted_sim, 3)
+round(auc.BONMI$weighted_rel, 3)
+```
+
+```
+# SVD_PMI, similar
+      auc       num       dim
+    0.757 14376.000  5809.000
+# SVD_PMI, related
+      auc       num       dim
+    0.695 18024.000  5809.000
+```
+```
+# BONMI, similar
+      auc       num       dim
+    0.811 13209.000  4964.000
+# BONMI, related
+      auc       num       dim
+    0.793 17124.000  4964.000
+```
+
+```{r}
+# Evaluate the AUC of PLM embeddings
+auc.coder = Myeval(coder)
+auc.sapbert = Myeval(sapbert)
+auc.biobert = Myeval(biobert)
+auc.pubmedbert = Myeval(pubmedbert)
+auc.sim = rbind(CODER = auc.coder$weighted_sim,SAPBERT = auc.sapbert$weighted_sim,
+                BioBERT = auc.biobert$weighted_sim, PubmedBERT = auc.pubmedbert$weighted_sim)
+auc.rel =rbind(CODER = auc.coder$weighted_rel,SAPBERT = auc.sapbert$weighted_rel,
+               BioBERT = auc.biobert$weighted_rel, PubmedBERT = auc.pubmedbert$weighted_rel)
+round(auc.sim,3)
+round(auc.rel,3)
+```
+
+```
+# sim
+#       auc   num   dim
+# CODER      0.941 18760 16762
+# SAPBERT    0.826 18760 16762
+# BioBERT    0.564 18760 16762
+# PubmedBERT 0.567 18760 16762
+```
+```
+# rel
+#       auc   num   dim
+# CODER      0.801 23677 16762
+# SAPBERT    0.795 23677 16762
+# BioBERT    0.600 23677 16762
+# PubmedBERT 0.589 23677 16762
+```
