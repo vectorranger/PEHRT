@@ -1,0 +1,108 @@
+---
+title: "rollup_data_by_batch"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `rollup_data_by_batch` function processes raw data files in batches to perform rollup operations, generate intermediate results, and produce summarized rollup outputs. It organizes the results into separate directories.
+
+```{python}
+def rollup_data_by_batch(config, unrolled_data_folder):
+
+    folder_name = os.path.basename(unrolled_data_folder)
+    intermediate_dir = f"Intermediate_Data/{folder_name}"
+    rolledup_dir = f"Rolledup_Data/{folder_name}"
+    unrolled_summary_dir = "Summary/Unrolled"
+    
+
+    os.makedirs(intermediate_dir, exist_ok=True)
+    os.makedirs(rolledup_dir, exist_ok=True)
+    os.makedirs(unrolled_summary_dir, exist_ok=True)
+
+    unrolled_freq_list = []
+
+    files = os.listdir(unrolled_data_folder)
+
+    batches = [file.split("_")[1] for file in files]
+    unique_batches = set(batches)
+
+    for batch in unique_batches:
+        load_files = [file for file in files if batch in file]
+        print(load_files)
+
+        if len(load_files)==1:
+            filepath = os.path.join(unrolled_data_folder, load_files[0])
+            file_df = pd.read_csv(filepath, dtype=str)
+            
+        else:
+            df_list = []
+            for file in load_files:
+                filepath = os.path.join(unrolled_data_folder, file)
+                df_list.append(pd.read_csv(filepath, dtype=str))
+            file_df = pd.concat(df_list)
+            
+        print(f"processing Batch: {batch}")
+        
+        intermediate_df = rollup(file_df, config["rollup_mapping"], [config['child_column'],"coding_system"], config['parent_column'])
+        intermediate_file = os.path.join(intermediate_dir, f"intermediate_{batch}.csv")
+        intermediate_df.to_csv(intermediate_file, index=False)
+        
+        unrolled_freq_list.append(summarize_unmapped(intermediate_df, config['child_column']))
+
+        cols_of_interest = [config['patient_id'],config['date'],config['parent_column']]
+        
+        only_rolledup_df = filter_rolledup_data(intermediate_df, cols_of_interest)
+        only_rolledup_filepath = os.path.join(rolledup_dir, f"rolledup_{batch}.csv")
+        only_rolledup_df.to_csv(only_rolledup_filepath, index=False)
+        
+        print(only_rolledup_df)
+
+
+    
+    unrolled_summary_file = os.path.join(unrolled_summary_dir , "unrolled_" + folder_name + "_code_counts.csv")
+
+    unrolled_summary =(
+        pd.concat(unrolled_freq_list)  # Concatenate list of DataFrames
+        .groupby(config['child_column'], as_index=False)["counts"]
+        .sum()
+        .sort_values(by="counts", ascending=False)
+        )
+
+    print(unrolled_summary)
+    unrolled_summary.to_csv(unrolled_summary_file, index=False)
+
+```
+
+## Input
+
+1. **config** (dict):  
+   A dictionary containing configuration details:
+   - `rollup_mapping` (pandas.DataFrame): Rollup mapping table.
+   - `child_column` (str): The column representing child entities.
+   - `parent_column` (str): The column representing parent entities.
+   - `patient_id` (str): The column representing patient IDs.
+   - `date` (str): The column representing dates.
+
+2. **unrolled_data_folder** (str):  
+   The folder path containing unrolled data files to be processed.
+
+## Output
+
+The function does not return any values but produces the following:
+1. **Intermediate Files**:  
+   Intermediate rollup files saved in the `Intermediate_Data/{folder_name}` directory.
+
+2. **Rolled-up Files**:  
+   Cleaned and rolled-up data files saved in the `Rolledup_Data/{folder_name}` directory.
+
+3. **Unrolled Summary File**:  
+   A summary of unmapped child codes, saved as `unrolled_{folder_name}_code_counts.csv` in the `Summary/Unrolled` directory.
+
+4. **Console Logs**:  
+   Logs progress and key actions during execution.
+
+## See also
+
+See [Roll-up_package](Roll-up_package.qmd).

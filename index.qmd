@@ -1,0 +1,38 @@
+---
+title: "PEHRT: A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research"
+toc: false
+---
+
+## Overview
+
+PEHRT assumes that researchers are familiar with their EHR data sources, including documentation, data schema, and coding systems. PEHRT supports both structured data (e.g., coded diagnoses and procedures, prescribed medications, laboratory results) and unstructured text (e.g., clinical notes, radiology reports). EHR data may reside in relational databases or as flat files (CSV/Parquet/JSON) and do not need to conform to a Common Data Model. At minimum, PEHRT requires a unique patient identifier that is used across tables, a timestamp for each event, recorded event and meta data to interpret the record (codes along with their coding system or note text with the note type)
+
+![](chart_PEHRT_new.png){fig-align="center" width="98%"}
+
+The PEHRT framework integrates structured and unstructured healthcare data across multiple institutions through three modules: (i) data cleaning, (ii) representation learning. These processes support downstream applications such as phenotyping, risk prediction, and federated learning
+
+**Computing and Storage Requirements for EHR Data Processing**
+
+The required resources depend on the dataset's scale. The following are some recommended setups:
+
+| **Dataset Scale** | **Node Setup** | **CPU Cores** | **RAM** | **Storage** | **Notes** |
+|----|----|---:|---:|----|----|
+| **Moderate (\~100k patients)** | Single node | 8–16 | 32–64 GB | ≥3× raw data size | R/Python Pandas framework or similar is sufficient. |
+| **Large (1–3 million patients)** | Single powerful node | 32–64 | 256–512 GB | 3–5× raw data size | Process data in patient batches; consider using Polars or Dask for parallel processing. |
+| **Large (1–3 million patients)** | Distributed cluster (5–10 nodes) | 8–32 each | 64–128 GB per node | 3–5× raw data size | Prefer Parquet storage. Use Spark, Dask, Polars. Save intermediate results and perform data quality checks. |
+| **Very large (\>5 million patients)** | Single HPC node (large memory) | \~128 | \~1 TB | 5x raw data size | Prefer this option only if a cluster isn’t available. Use big data processing frameworks like Spark or Dask on a single high memory server. Save intermediate data and add data quality checks. Process data in batches. Use HPC scratch space |
+| **Very large (\>5 million patients)** | Distributed HPC cluster (10–20 nodes) | \~32-64 each | \~128-256 TB each | 5x raw data size | Use Parquet and a scalable engine (e.g., Spark, Dask). Checkpoint intermediate data and add data-quality checks. Process in batches as data grows. Use HPC scratch space |
+
+**Software Recommendations for EHR Data Processing**
+
+-   **Data Extraction and Cleaning:**\
+    Use **Python** for extracting and cleaning data from SQL databases.
+
+-   **NLP-based Processing of Unstructured Clinical Notes:**\
+    Tools like **NILE**, **cTAKES**, **HITEx**, **MedTagger**, **MetaMap**, **OBO Annotator**, or **Stanford CoreNLP** are ideal for tasks such as:
+
+    -   **Named Entity Recognition (NER):** Identifying clinical conditions, symptoms, medications, lab tests, etc.\
+    -   **Semantic Analysis:** Extracting relevant clinical concepts from notes.
+
+-   **Computational Libraries for Post-Processing:**\
+    Depending on the dataset size, consider Python libraries like **Pandas** for standard processing or **Dask/Polars** for parallel processing to efficiently handle large datasets.

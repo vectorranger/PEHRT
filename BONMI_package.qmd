@@ -1,0 +1,192 @@
+---
+title: "Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices"
+execute: 
+  enabled: false
+---
+
+Exploit the orthogonal Procrustes problem to align the eigenspace of the two sub-matrices, then complete the missing blocks by the inner product of the two low-rank components. Background and details about the methods can be found at Zhou et al.(2021)<https://doi.org/10.48550/arXiv.2105.10360>
+
+## Detail 
+
+The BONMI_package.R script is designed for efficient matrix transformation and dimensionality reduction, particularly tailored for analyzing Positive Pointwise Mutual Information (PPMI) matrices. It features the [Procrustes](Procrustes_function.qmd) function, which aligns two matrices by computing an orthogonal transformation matrix that minimizes their Frobenius norm difference. The [embedding](embedding_function.qmd) function extracts a low-dimensional representation from singular value decomposition (SVD) results to simplify complex data. The main function, [BONMI](BONMI_function.qmd), processes a list of PPMI matrices, optionally applies weights, and leverages standard or randomized SVD to create reduced-rank embeddings. It aligns these embeddings with the Procrustes function, ensuring consistent representation across datasets.
+
+## Reference
+
+Zhou, D., Cai, T., & Lu, J. (2021). Multi-source learning via completion of block-wise overlapping noisy matrices. arXiv preprint arXiv:2105.10360.
+
+Finlayson, S. G., LePendu, P., and Shah, N. H. (2014). Building the graph of medicine from millions of clinical narratives. Scientific data, 1:140032.
+
+Johnson, A. E., Pollard, T. J., Shen, L., Li-Wei, H. L., Feng, M., Ghassemi, M., Moody, B., Szolovits, P., Celi, L. A., and Mark, R. G. (2016). Mimic-iii, a freely accessible critical care database. Scientific data, 3(1):1–9.
+
+## Example
+
+### 1. Setting Parameters and Generating Data
+
+```{r}
+
+set.seed(1)
+N = 3000  # The total number of entities (rows/columns of the matrix)
+r = 10    # The rank of the underlying low-rank matrix
+m = 5     # The number of data sources (matrices)
+p = 0.1   # The probability of observing an entry in each source
+```
+
+-   The `set.seed(1)` ensures reproducibility by initializing the random number generator.
+
+### 2. Creating the Low-Rank Matrix `W0`
+
+```{r}
+
+X0 = matrix(rnorm(N*r), nrow=N)
+W0 = X0 %*% t(X0)
+rownames(W0) = colnames(W0) = paste0('code', 1:N)
+```
+
+-   `X0` is an `N x r` matrix filled with random values from a standard normal distribution.
+-   `W0` is an `N x N` low-rank symmetric matrix obtained by multiplying `X0` by its transpose.
+-   `rownames` and `colnames` are set to `code1` to `code3000` to identify the rows and columns.
+
+### 3. Creating Multiple Noisy Submatrices
+
+```{r}
+
+W = list()
+for(s in 1:m){
+  ids = which(runif(N) < p)  # Randomly selecting observed indices
+  Ns = length(ids)           # Number of observed entries
+  Es = matrix(rnorm(Ns*Ns, sd=s*0.01), nrow=Ns)  # Noise matrix with increasing variance
+  Es = Es + t(Es)            # Ensuring the noise matrix is symmetric
+  Ws = W0[ids, ids] + Es     # Adding noise to the observed submatrix
+  W[[s]] = Ws                # Storing the noisy submatrix in a list
+}
+```
+
+-   This loop creates `m` submatrices with block-wise observations.
+-   Each submatrix `Ws` is sampled from `W0` and has added symmetric noise.
+-   The result is stored in the list `W`, which contains all submatrices.
+
+### 4. Using `BONMI` for Matrix Completion
+
+```{r}
+
+Xhat <- BONMI(W, r, weights=NULL, rsvd.use=FALSE)
+#Xhat <- BONMI(W, r, weights=NULL, rsvd.use=TRUE)
+
+  ##weights: the weight vector for the PPMI matrices. If weights = NULL, then it will be estimated from data. 
+  ##rsvd.use: If rsvd.use=TRUE, we will use the 'rsvd' function to calculate the svd, which is much faster than the 'svd' function  when r is small. 
+ 
+```
+
+-   `Xhat` is the output of the `BONMI` function, representing the estimated low-rank embeddings.
+-   The `weights` parameter is set to `NULL`, and `rsvd.use=FALSE` means standard SVD is used.
+-   Optionally, `rsvd.use=TRUE` can be set to use randomized SVD.
+
+### 5. Post-Processing and Result Verification
+
+```{r}
+
+codes = rownames(Xhat)
+What = Xhat %*% t(Xhat)
+
+id = match(codes, rownames(W0))
+Wstar = W0[id, id]
+
+#BONMI's result
+norm(What - Wstar, 'F') / norm(Wstar, 'F')
+```
+```
+[1] 0.003746704
+```
+
+-   `What` is the reconstructed matrix using the output embeddings `Xhat`.
+-   `id` finds the matching indices between `Xhat` and the original matrix `W0`.
+-   `Wstar` is the corresponding submatrix of `W0` for comparison.
+-   The result `norm(What - Wstar, 'F') / norm(Wstar, 'F')` calculates the relative Frobenius norm error, measuring how close `What` is to the true submatrix `Wstar`.
+
+```{r}
+Myeval<-function(embed){
+  dict <- data.frame(code = rownames(embed))
+  dict$group <- sapply(dict$code, function(x) strsplit(x,":")[[1]][1]) 
+  AUC <- get_AUC_embed(embed = embed, pairs = pairs, WithNull = FALSE, dict = dict, 
+                       normalize = FALSE, interested_code = NULL, nmax = 10000, myseed = 214)
+  sim = AUC$`codi-codi(similar)`
+  rel = AUC$`codi-codi(related)`
+  sim = sim[sim[,2]>50,]
+  rel = rel[rel[,2]>50,]
+  
+  AUC$weighted_sim = c('auc'=sum(sim[,1]*sim[,2])/sum(sim[,2]),'num'=sum(sim[,2]),'dim'=nrow(embed))
+  AUC$weighted_rel = c('auc'=sum(rel[,1]*rel[,2])/sum(rel[,2]),'num'=sum(rel[,2]),'dim'=nrow(embed))
+  AUC
+}
+```
+
+```{r}
+X = Embed(fit.W,r) 
+rownames(X) = rownames(Wm)
+X1 = X[rownames(X)%in%rownames(W[[1]]),]
+X2 = X[rownames(X)%in%rownames(W[[2]]),]
+X3 = X[rownames(X)%in%rownames(W[[3]]),]
+X4 = X[rownames(X)%in%rownames(W[[4]]),]
+X5 = X[rownames(X)%in%rownames(W[[5]]),]
+
+load(file='/n/data1/hsph/biostat/celehs/lab/SHARE/Relationship Pairs/PairsAlltypeUMLS_05122024.Rdata')
+source("/n/data1/hsph/biostat/celehs/lab/SHARE/Relationship Pairs/AUC Code/get_AUC_MS.R")
+
+auc.BONMI = Myeval(X)
+auc1 = Myeval(X1)
+auc2 = Myeval(X2)
+auc3 = Myeval(X3)
+auc4 = Myeval(X4)
+auc5 = Myeval(X5)
+res.sim = rbind(auc1$weighted_sim,auc2$weighted_sim,auc3$weighted_sim,auc4$weighted_sim,auc5$weighted_sim,auc.BONMI$weighted_sim)
+round(res.sim,3) 
+# auc   num   dim
+# [1,] 0.920 16567  9620
+# [2,] 0.920 16000  6964
+# [3,] 0.895 18007 18432
+# [4,] 0.905 12261  5203
+# [5,] 0.879  2469  4341
+# [6,] 0.882 20276 31233
+
+# auc   num   dim
+# [1,] 0.943 16567  9620
+# [2,] 0.946 16000  6964
+# [3,] 0.926 18007 18432
+# [4,] 0.934 12261  5203
+# [5,] 0.922  2469  4341
+# [6,] 0.915 20276 31233
+
+# auc   num   dim
+# [1,] 0.944 16567  9620
+# [2,] 0.947 16000  6964
+# [3,] 0.924 18007 18432
+# [4,] 0.934 12261  5203
+# [5,] 0.926  2469  4341
+# [6,] 0.912 20276 31233
+
+res.rel = rbind(auc1$weighted_rel,auc2$weighted_rel,auc3$weighted_rel,auc4$weighted_rel,auc5$weighted_rel,auc.BONMI$weighted_rel)
+round(res.rel,3) 
+# auc   num   dim
+# [1,] 0.849 20154  9620
+# [2,] 0.862 18334  6964
+# [3,] 0.842 22040 18432
+# [4,] 0.837 16219  5203
+# [5,] 0.806  4628  4341
+# [6,] 0.790 31291 31233
+
+# auc   num   dim
+# [1,] 0.867 20154  9620
+# [2,] 0.882 18334  6964
+# [3,] 0.862 22040 18432
+# [4,] 0.860 16219  5203
+# [5,] 0.842  4628  4341
+# [6,] 0.813 31291 31233
+
+# auc   num   dim
+# [1,] 0.867 20154  9620
+# [2,] 0.881 18334  6964
+# [3,] 0.860 22040 18432
+# [4,] 0.858 16219  5203
+# [5,] 0.845  4628  4341
+# [6,] 0.812 31291 31233
+```

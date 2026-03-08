@@ -1,0 +1,113 @@
+---
+title: "Module 3: Automated Harmonization"
+execute: 
+  enabled: false
+---
+
+## Step 3.1: Joint embedding training with BONMI
+
+The Block-wise Overlapping Noisy Matrix Integration [(BONMI)](BONMI_package.qmd) algorithm helps combine data from different sources by aligning and completing SPPMI (Pointwise Mutual Information) matrices.
+
+It populates this matrix by averaging SPPMI values from contributing institutions when overlaps exist and imputing missing values using orthogonal transformations. This approach enables the creation of a shared data representation, facilitating collaborative analysis across diverse datasets.
+
+::: {.callout-note}
+The following code examples in this part are written using the R programming language.
+:::
+
+Here we use the CSV files which are the output from Module 1 Step 4. The following script performs necessary preprocessing steps for BONMI analysis.
+
+```{r}
+# Load libraries
+library(dplyr)      
+library(nlpembeds)  
+library(kgraph)     
+
+# Set file path and load CSV files
+folder_path <- "./step4_rolledup_finaldata/step4_rolledup_finaldata/Diagnoses"
+csv_files <- list.files(path = folder_path, pattern = "*.csv", full.names = TRUE)
+
+# Initialize variables
+W = list()
+s = 0
+r = 350
+
+# Process each CSV file: load data, modify structure, and compute SPPMI
+for(x in csv_files) {
+  s = s + 1
+  input_df = read.csv(x)
+  input_df$count <- 1
+  input_df <- input_df[ , c(2,1,3,4)]
+  colnames(input_df) <- c("Month", "Patient", "Parent_Code", "Count")
+  spm_cooc = build_df_cooc(input_df)
+  m_pmi = get_pmi(spm_cooc)
+  W[[s]] = m_pmi
+}
+
+# Apply the BONMI algorithm
+Xhat <- BONMI(W, r, weights=NULL, rsvd.use=FALSE)
+
+# Fit embeddings and evaluate using ROC
+set.seed(1)
+fit_kg_bonmi = fit_embeds_kg(Xhat, 'cosine', df_pairs = df_known_pairs[c(1, 3)])
+pROC::plot.roc(fit_kg_bonmi$roc, print.auc = TRUE)
+print(fit_kg_bonmi$roc)
+```
+
+![](BONMI_AUC.png)
+
+```
+Call:
+roc.default(response = truth, predictor = sims, direction = "<",     quiet = TRUE)
+
+Data: sims in 2598 controls (truth 0) < 2598 cases (truth 1).
+Area under the curve: 0.7915
+```
+
+The output of this process includes the embedding matrix and evaluation results from BONMI.
+
+## Step 3.2: Joint embedding validation
+
+BONMI embeddings can be improved by combining them with embeddings from pre-trained language models (PLMs). While BONMI focuses on aligning data from different sources, PLMs capture deeper meanings from text. Putting them together creates stronger embeddings, which are helpful for tasks like organizing and standardizing clinical data.
+
+::: {.callout-note}
+The following code examples in this part are written using the R programming language.
+:::
+
+Here we use the output from Module 2 Section C, `nlpembedding`, as one of the input data.
+
+```{r}
+# Convert embeddings and predictions to data frames
+df_nlp_embedding <- as.data.frame(nlpembedding)
+df_bonmi <- as.data.frame(Xhat)
+
+df_nlp_embedding$RowNames <- rownames(df_nlp_embedding)
+df_bonmi$RowNames <- rownames(df_bonmi)
+
+# Merge data frames by row names
+df_bonmi_merged <- merge(df_nlp_embedding, df_bonmi, by="RowNames", all=FALSE)
+
+# Convert to matrix and assign row names
+m_bonmi_merged <- as.matrix(df_bonmi_merged[, -1])
+rownames(m_bonmi_merged) <- df_bonmi_merged$RowNames
+
+# Fit embeddings to a knowledge graph
+fit_kg_comb <- fit_embeds_kg(m_bonmi_merged, 'cosine', df_pairs = df_known_pairs[c(1, 3)])
+
+# Plot and print ROC curve
+pROC::plot.roc(fit_kg_comb$roc, print.auc = TRUE)
+print(fit_kg_comb$roc)
+```
+
+![](nlp_BONMI.png)
+
+```
+Call:
+roc.default(response = truth, predictor = sims, direction = "<",     quiet = TRUE)
+
+Data: sims in 2598 controls (truth 0) < 2598 cases (truth 1).
+Area under the curve: 0.8705
+```
+
+The output of this process includes the embedding matrix and evaluation results.
+
+The AUC for the combined BONMI and NLP embeddings is 0.8705, showing stronger performance compared to the embeddings generated in Module 2 (AUC = 0.7746). This improvement demonstrates that combining the two methods enhances the ability to distinguish co-occurring PheCode pairs from non-co-occurring ones.

@@ -1,0 +1,38 @@
+---
+title: "filter_rolledup_data"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `filter_rolledup_data` function filters and retains only the rows with a `Rollup_Status` of `1`, indicating successful rollup. It then keeps only the specified columns of interest.
+
+```{python}
+def filter_rolledup_data(rolledup_data,cols_of_interest):
+    
+    filtered = rolledup_data[rolledup_data['Rollup_Status']=="1"]
+    
+    filtered = filtered[cols_of_interest]
+
+    filtered.drop_duplicates(inplace=True)
+    
+    return filtered
+```
+
+## Input
+
+1. **rolledup_data** (pandas.DataFrame):  
+   The DataFrame resulting from the `rollup` function, which includes the `Rollup_Status` column.
+
+2. **cols_of_interest** (list):  
+   A list of column names to retain in the filtered DataFrame.
+
+## Output
+
+- **filtered** (pandas.DataFrame):  
+  A DataFrame with rows where `Rollup_Status` equals `1`, containing only the columns specified in `cols_of_interest`.
+
+## See also
+
+See [Roll-up_package](Roll-up_package.qmd).

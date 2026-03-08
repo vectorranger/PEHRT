@@ -1,0 +1,96 @@
+---
+title: "get_monthly_counts_relative_to_diagnoses"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `get_monthly_counts_relative_to_diagnoses` function calculates the monthly frequency of specified events relative to the first diagnosis date of a particular condition. It generates aggregated data files for each month within a specified range.
+
+```{python}
+def get_monthly_counts_relative_to_diagnoses(diag_filename, input_file, column_name ,output_folder, index_diagnoses_code, month_start, month_end):
+    
+    diagnoses = pd.read_csv(diag_filename, dtype=str)
+    
+    inp_file = pd.read_csv(input_file, dtype=str)
+
+    filter_diagnoses = diagnoses[diagnoses['PheCode']==index_diagnoses_code]
+    
+    disease_first_diagnoses = filter_diagnoses.groupby('subject_id')['date'].min().reset_index() # Check this
+    
+    disease_first_diagnoses.columns = ['subject_id', 'index_date']
+    
+    merged_df = pd.merge(disease_first_diagnoses,inp_file[['subject_id','date',column_name]], on="subject_id",how='left')
+    
+    print(merged_df)
+
+    merged_df['index_date'] = pd.to_datetime(merged_df['index_date'])
+    
+    merged_df['date'] = pd.to_datetime(merged_df['date'])
+    
+    merged_df['days_from_first_diagnosis'] = (merged_df['date'] - merged_df['index_date']).dt.days
+    print(merged_df)
+
+    print(merged_df[['index_date', 'date']].dtypes)
+    print(merged_df.isna().sum())
+
+    
+    
+    merged_df['month']=merged_df['days_from_first_diagnosis'].map(lambda x: get_month(x))
+    
+    print(merged_df)
+    
+    os.makedirs(os.path.join("./Aggregated_Data", index_diagnoses_code, column_name), exist_ok=True)
+    
+    for month in range(month_start, month_end+1, 1):
+        
+        print(f"Processing Month:{month}")
+        
+        output_path = os.path.join("./Aggregated_Data", index_diagnoses_code, column_name, f"month_{month}.csv")
+
+        print(output_path)
+    
+        merged_df_month = merged_df[merged_df['month']==month][['subject_id',column_name]]
+    
+        counts_per_subject_month = merged_df_month.groupby(['subject_id', column_name]).size().reset_index(name='counts')
+   
+        matrix_df = counts_per_subject_month.pivot_table(index='subject_id', columns=column_name, values='counts', fill_value=0)
+    
+        matrix_df.to_csv(output_path)
+
+```
+
+## Input
+
+1. **diag_filename** (str):  
+   The path to the CSV file containing diagnosis data, including `subject_id` and `PheCode` columns.
+
+2. **input_file** (str):  
+   The path to the input CSV file containing event data, including `subject_id`, `date`, and the column specified by `column_name`.
+
+3. **column_name** (str):  
+   The name of the column representing the event type to be analyzed.
+
+4. **output_folder** (str):  
+   The folder where aggregated data will be saved.
+
+5. **index_diagnoses_code** (str):  
+   The diagnosis code to be used as the index for aggregating event counts.
+
+6. **month_start** (int):  
+   The starting month relative to the first diagnosis date.
+
+7. **month_end** (int):  
+   The ending month relative to the first diagnosis date.
+
+## Output
+
+The function does not return any values but generates:
+- **Monthly Aggregated Files**:  
+  CSV files for each month in the range `[month_start, month_end]` are saved in the directory:
+  `./Aggregated_Data/{index_diagnoses_code}/{column_name}/month_{month}.csv`.  
+  Each file contains a pivot table where:
+  - Rows represent patients (`subject_id`).
+  - Columns represent event types (`column_name`).
+  - Values represent the counts of events.

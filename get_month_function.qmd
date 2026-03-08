@@ -1,0 +1,34 @@
+---
+title: "get_month"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `get_month` function calculates the approximate month from a given number of days. It uses different rounding methods depending on whether the number of days is positive, negative, or zero.
+
+```{python}
+def get_month(days):
+    if days == 0:
+        return 1
+
+    elif days > 0:
+        return math.ceil(days / 30)
+
+    elif days < 0:
+        return math.floor(days / 30)
+```
+
+## Input
+
+1. **days** (int):  
+   The number of days for which the corresponding month is to be calculated.
+
+## Output
+
+- **month** (int):  
+  The month corresponding to the input days:
+  - `1` for `days = 0`
+  - Rounded up for positive days
+  - Rounded down for negative days

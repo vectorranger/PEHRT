@@ -1,0 +1,221 @@
+---
+title: "clean_data_by_batch"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `clean_data_by_batch` function processes a large input CSV file in batches based on subject IDs and their associated batch numbers. For each batch, it filters, cleans, and formats the data according to specified columns of interest. The cleaned data is then saved as separate files for each batch. This function is designed to handle large datasets efficiently and ensure data consistency for downstream analysis.
+
+```{python}
+## Ignore the function below, we are defining functions so that we can print and save the info in a log file
+
+def setup_logger(log_type,log_file):
+
+    log_folder = os.path.join("log_folder", log_type)
+    
+    # Ensure the log folder exists
+    os.makedirs(log_folder, exist_ok=True)
+    
+    # Define the full path for the log file
+    log_filepath = os.path.join(log_folder, log_file)
+
+    # Delete the log file if it exists
+    if os.path.exists(log_filepath):
+        os.remove(log_filepath)
+    
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
+    logging.basicConfig(level=logging.DEBUG, format='%(message)s', handlers=[logging.FileHandler(log_filepath)])
+
+# Define the function to print and log messages
+def print_and_log_cleaning(message):
+    logging.info(message)  # Log message to the specific log file
+    
+#################################################################################################
+
+
+def missing_values_summary(df):
+    missing_values = df.isna().sum()
+    missing_df = pd.DataFrame({'Column Name': missing_values.index, 'Missing Values Count': missing_values.values})
+    print_and_log_cleaning("Missing Values Count:")
+    print_and_log_cleaning(missing_df)
+
+
+
+def clean_data(df, cols_of_interest, time_col):
+
+    missing_values_summary(df)
+
+    print_and_log_cleaning(f"Initial number of rows: {df.shape[0]}")
+
+    print_and_log_cleaning("Keeping only the essential columns")
+    df = df[cols_of_interest]
+
+    if df.isna().sum().any():
+        df = df.dropna()
+        print_and_log_cleaning(f"Number of rows after dropping na rows: {df.shape[0]}")
+    else:
+        print_and_log_cleaning("No rows with missing values to drop.")
+
+    print_and_log_cleaning("Extracting only the date info")
+    df[time_col] = df[time_col].str[:10]
+
+    print_and_log_cleaning("Renaming the columns")
+    df = df.rename(columns={time_col: "date"})
+
+    print_and_log_cleaning("Checking for duplicate rows")
+    if df.duplicated().sum() > 0:
+        print_and_log_cleaning("Duplicate rows found. Removing duplicates:")
+        df = df.drop_duplicates()
+        return df
+    else:
+        print_and_log_cleaning("No duplicate rows found.")
+        return df
+
+
+def clean_data_batch_supportfunc(df, cols_of_interest):
+
+    missing_values_summary(df)
+
+    print_and_log_cleaning(f"Initial number of rows: {df.shape[0]}")
+
+    if df.isna().sum().any():
+        df.dropna(inplace=True)
+        print_and_log_cleaning(f"Number of rows after dropping na rows: {df.shape[0]}")
+    else:
+        print_and_log_cleaning("No rows with missing values to drop.")
+
+    print_and_log_cleaning("Extracting only the date info")
+    df[cols_of_interest['date']] = df[cols_of_interest['date']].str[:10]
+  
+
+    print_and_log_cleaning("Renaming the columns")
+    df = df.rename(columns={cols_of_interest['date']: "date"})
+    df = df.rename(columns={cols_of_interest['code']: "code"})
+
+    print_and_log_cleaning("Checking for duplicate rows")
+    if df.duplicated().sum() > 0:
+        print_and_log_cleaning("Duplicate rows found. Removing duplicates:")
+        df = df.drop_duplicates()
+        return df
+    else:
+        print_and_log_cleaning("No duplicate rows found.")
+        return df
+
+
+def file_line_count(file_path):
+    count = 0
+    with open(file_path, 'r') as file:
+        for line in file:
+            count += 1
+    return count
+
+
+def clean_data_by_batch(input_file_path, patient_ids, cols_of_interest, data_name, num_rows_to_load=1500000):
+    #Coding system will be a list of columns if the coding system is defined in the input data, if not, you can pass a single value list
+
+    filename = os.path.splitext(os.path.basename(input_file_path))[0]
+
+    # Set up logger for cleaning function
+    setup_logger("cleaning",f"{data_name}_{filename}.txt")  # Create log folder if necessary and set up logging
+
+ 
+    # Create a dictionary for batch_num lookup based on subject_id
+    batch_lookup = dict(zip(patient_ids['subject_id'], patient_ids['batch_num']))
+    
+    # Get the list of unique batch numbers from patient_ids
+    unique_batch_nums = patient_ids['batch_num'].unique()
+
+    output_dir = f'Cleaned_RawData/{data_name}'
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Iterate over each batch number
+    for batch_num in tqdm(unique_batch_nums, desc="Processing batches", unit="batch"):
+        
+        print_and_log_cleaning(f"\nProcessing batch {batch_num}:")
+
+        collected_data = []
+
+        non_none_cols_of_interest = [item for key, item in cols_of_interest.items() if item is not None and key != "coding_system"
+]
+        
+        chunk_iter = pd.read_csv(input_file_path, chunksize=num_rows_to_load, usecols=non_none_cols_of_interest , dtype=str)
+        
+        # Process each chunk and collect data for the current batch
+        for chunk_idx, chunk in enumerate(chunk_iter):
+            print_and_log_cleaning(f"------ Processing  batch {batch_num} chunk{chunk_idx + 1}")
+
+            batch_data = chunk[chunk['subject_id'].map(batch_lookup) == batch_num]
+            
+            if not batch_data.empty:
+                collected_data.append(batch_data)
+        
+        # If we found data for this batch, clean and save it
+        if collected_data:
+
+            final_batch_data = pd.concat(collected_data, ignore_index=True)
+
+            print_and_log_cleaning(final_batch_data)
+
+            if cols_of_interest.get('code_version'):
+                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)
+                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system'] + cleaned_batch_data[cols_of_interest['code_version']]
+
+                
+            else:
+                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)
+                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system']
+
+            cleaned_batch_data=cleaned_batch_data[['subject_id','date','code','coding_system']]
+            
+            # Prepare the output file path dynamically using the data_name and batch_num
+            output_file = os.path.join(output_dir, f"{data_name.lower()}_batch{batch_num}_{filename}.csv")
+
+            
+            # Save the cleaned data to the file
+            cleaned_batch_data.to_csv(output_file, index=False)
+            print_and_log_cleaning(f"Batch {batch_num} cleaned data saved to {output_file}.")
+        else:
+            print_and_log_cleaning(f"Warning: No data found for batch {batch_num}.")
+ 
+    
+    
+    print_and_log_cleaning(f"\nCleaning complete. All batches processed and saved in the '{output_dir}' directory.")
+```
+
+## Input
+The function accepts the following arguments:
+
+1. **input_file_path** (str):  
+   The path to the input CSV file to be processed.
+
+2. **patient_ids** (pandas.DataFrame):  
+   A DataFrame containing `subject_id` and `batch_num` columns. It maps each subject to their respective batch.
+
+3. **cols_of_interest** (dict):  
+   A dictionary specifying the columns to be processed. The keys represent logical identifiers (e.g., `date`, `code`, `code_version`), and the values are the corresponding column names in the CSV.
+
+4. **data_name** (str):  
+   A descriptive name for the dataset being processed. It is used for naming the output files.
+
+5. **num_rows_to_load** (int, optional, default=1,500,000):  
+   The number of rows to read at a time when processing the input file in chunks. This allows for memory-efficient processing of large files.
+
+## Output
+The function does not return any values but performs the following actions:
+
+1. **Logs**:  
+   A log file is generated in a `log_folder/cleaning` directory, capturing detailed information about the cleaning process for each batch.
+
+2. **Cleaned Data Files**:  
+   For each batch, a CSV file containing the cleaned data is saved in the `Cleaned_RawData/{data_name}` directory. Each file includes the following columns:
+   - `subject_id`
+   - `date` (formatted as `YYYY-MM-DD`)
+   - `code`
+   - `coding_system`
+
+3. **Console Output**:  
+   Progress and warnings are printed to the console during the execution of the function.

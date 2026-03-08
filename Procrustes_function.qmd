@@ -1,0 +1,31 @@
+---
+title: "Procrustes"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The Procrustes function computes an orthogonal transformation matrix that aligns two matrices (`X1` and `X2`) by minimizing the Frobenius norm of their difference. This transformation ensures that `X2` is rotated to best match `X1`.
+
+```{r}
+Procrustes <- function(X1,X2){
+  #Return Omega = arg min||X1 - X2 Omgea||_F
+  H = t(X2)%*%X1
+  mod = svd(H)
+  return(mod$u%*%t(mod$v))
+}
+```
+
+## Arguments
+
+- `X1`: A matrix to be used as the reference for alignment.
+- `X2`: A matrix to be transformed and aligned with `X1`.
+
+## Output
+
+- Returns an orthogonal transformation matrix Ω such that $\left \| X1-X2 \Omega  \right\| _F$  is minimized.
+
+## See also
+
+See [BONMI_package](BONMI_package.qmd) for code example.

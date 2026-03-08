@@ -1,0 +1,368 @@
+---
+title: "get_AUC_MS"
+execute: 
+  enabled: false
+---
+
+## Description
+
+This script provides functions to compute the Area Under the Curve (AUC) for evaluating the similarity between medical code pairs, using either cosine similarity matrices or embedding vectors. It includes functions for generating null (negative) pairs, filtering for codes of interest, merging data sources, and computing AUC scores for grouped subsets of data.
+
+
+```{r}
+get_AUC_cosine_sub = function(cosine, pairs, nmax = 10000){
+  set.seed(214)
+  posi = pairs %>%
+    mutate(id1 = match(pairs$code1, rownames(cosine)),
+           id2 = match(pairs$code2, rownames(cosine))) %>%
+    dplyr::select(id1, id2) %>%
+    na.omit()
+  nega = pairs %>%
+    mutate(id1 = match(pairs$nullcode1, rownames(cosine)),
+           id2 = match(pairs$nullcode2, rownames(cosine))) %>%
+    dplyr::select(id1, id2) %>%
+    na.omit()
+  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)
+  if(n<5){
+    return(c('auc'=NA,'num'=n))
+  }else{
+    y = rep(c(0,1), each = min(n,nmax))
+    p0 = cosine[cbind(nega$id1, nega$id2)]
+    p1 = cosine[cbind(posi$id1, posi$id2)]
+    p = c(sample(p0,min(n,nmax)),
+          sample(p1,min(n,nmax)))
+    roc0 = roc(y, p, direction = "<")
+    return(c('auc'=roc0$auc,'num'=n))
+  }
+}
+
+get_AUC_embed_sub = function(embed, pairs, nmax = 10000){
+  set.seed(214)
+  posi = pairs %>%
+    mutate(id1 = match(pairs$code1, rownames(embed)),
+           id2 = match(pairs$code2, rownames(embed))) %>%
+    dplyr::select(id1, id2) %>%
+    na.omit()
+  nega = pairs %>%
+    mutate(id1 = match(pairs$nullcode1, rownames(embed)),
+           id2 = match(pairs$nullcode2, rownames(embed))) %>%
+    dplyr::select(id1, id2) %>%
+    na.omit()
+  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)
+  if(n<5){
+    return(c('auc'=NA,'num'=n))
+  }else{
+    y = rep(c(0,1), each = min(n,nmax))
+    p0 = apply(embed[nega$id1,]*embed[nega$id2,],1,sum)
+    p1 = apply(embed[posi$id1,]*embed[posi$id2,],1,sum)
+    p = c(sample(p0,min(n,nmax)),
+          sample(p1,min(n,nmax)))
+    roc0 = roc(y, p, direction = "<")
+    return(c('auc'=roc0$auc,'num'=n))
+  }
+}
+
+
+get_nullpairs = function(pairs, dict){
+  pairs = pairs %>%
+    filter(code1%in%dict$code) %>%
+    filter(code2%in%dict$code)
+  
+  group = data.frame(g1 = dict$group[match(pairs$code1,dict$code)],
+                     g2 = dict$group[match(pairs$code2,dict$code)])
+  groupdf = data.frame(g1 = apply(group,1,min),
+                       g2 = apply(group,1,max))
+  group = unique(groupdf)
+  pairs$nullcode1 = NA
+  pairs$nullcode2 = NA
+  
+  for(i in 1:nrow(group)){
+    idx = which(groupdf$g1==group[i,1] & groupdf$g2==group[i,2])
+    if(length(idx)==0) next
+    posi = pairs[idx,c('code1','code2')]
+    posi = data.frame(code1 = c(posi$code1,posi$code2),
+                      code2 = c(posi$code2,posi$code1))
+    nega = data.frame(code1 = sample(dict$code[which(dict$group==group[i,1])], nrow(posi)*2,
+                                     replace = TRUE),
+                      code2 = sample(dict$code[which(dict$group==group[i,2])], nrow(posi)*2,
+                                     replace = TRUE))
+    nega = nega %>%
+      filter(code1!=code2)
+    nega = data.frame(code1 = apply(nega,1,min),
+                      code2 = apply(nega,1,max))
+    nega = nega[!duplicated(nega),]
+    nega = setdiff(nega, posi)
+    
+    if(nrow(nega)<length(idx)){
+      cat("Warning: Not enough negative samples! g1 =",
+          group[i,1],", g2 =", group[i,2],"\n")
+      pairs$nullcode1[idx[1:nrow(nega)]] = nega$code1
+      pairs$nullcode2[idx[1:nrow(nega)]] = nega$code2
+    }else{
+      pairs$nullcode1[idx] = nega$code1[1:length(idx)]
+      pairs$nullcode2[idx] = nega$code2[1:length(idx)]
+    }
+  }
+  return(pairs)
+}
+
+get_interested_pairs = function(pairs, interested_code){
+  pairs = pairs %>%
+    filter(code1 %in% interested_code | code2 %in% interested_code)
+  return(pairs)
+}
+
+get_merge_pairs = function(pairs, merged, oldremain = FALSE){
+  pairs1 = lapply(1:length(merged), function(i){
+    idx = which(pairs$source%in%merged[[i]])
+    if(length(idx)==0) return(pairs[numeric(),])
+    oldpairs = pairs[idx,]
+    tmp = data.frame(code1 = apply(oldpairs[,c('code1','code2')],1,min),
+                     code2 = apply(oldpairs[,c('code1','code2')],1,max))
+    tmp = tmp[!duplicated(tmp),]
+    tmp$source = names(merged)[i]
+    tmp$type = oldpairs$type[1]
+    tmp$group = oldpairs$group[1]
+    exinfo = setdiff(colnames(pairs), colnames(tmp))
+    if(length(exinfo)==0) return(tmp)
+    tmp = cbind(tmp, oldpairs[1:nrow(tmp),exinfo])
+    return(tmp)
+  })
+  pairs1 = do.call("rbind", pairs1)
+  if(oldremain){
+    pairs2 = pairs
+  }else{
+    pairs2 = pairs[which(!pairs$source%in%unlist(merged)),]
+  }
+  return(rbind(pairs1,pairs2))
+}
+
+get_AUC_embed = function(embed, pairs, WithNull = FALSE,
+                         dict = NULL, normalize = FALSE,
+                         interested_code = NULL,
+                         nmax = 10000, myseed = 214){
+  if(!is.null(interested_code)){
+    pairs = get_interested_pairs(pairs, interested_code)
+  }
+  pairs = pairs %>%
+    filter(code1!=code2)
+  pairs$source[which(pairs$source=="LOINC Hierachy (rm)")] = "LOINC Hierachy (LP1)"
+  if(normalize){
+    cat("## Normalizing embedding ####","\n")
+    embed = embed/apply(embed, 1, norm, '2')
+  }
+  if(!is.null(dict)) dict = dict %>% filter(code%in%rownames(embed))
+  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){
+    pairs = pairs %>%
+      filter(code1%in%rownames(embed) & code2%in%rownames(embed)) %>%
+      filter(nullcode1%in%rownames(embed) & nullcode2%in%rownames(embed))
+  }else{
+    cat("## Generating Null Pairs ####","\n")
+    set.seed(myseed)
+    pairs = get_nullpairs(pairs, dict)
+  }
+  group = pairs %>%
+    dplyr::select(type, group, source) %>%
+    unique()
+  Group = group %>%
+    dplyr::select(type, group) %>%
+    unique() %>%
+    arrange(group, desc(type))
+  
+  cat("## Computing AUC ####","\n")
+  AUClist = list()
+  for(i in 1:nrow(Group)){
+    subgroup = group %>%
+      filter(type == Group$type[i] & group == Group$group[i])
+    subpairs = pairs %>%
+      filter(type == Group$type[i] & group == Group$group[i])
+    # cl = makeCluster(detectCores()-1)
+    # clusterExport(cl, c("subpairs","subgroup","embed"), 
+    #               envir = environment())
+    AUCpart = lapply(1:nrow(subgroup), function(j){
+      # source(paste(wkd,'Compute_AUC.R',sep=""))
+      subsubpairs = subpairs %>% 
+        filter(source == subgroup$source[j])
+      return(get_AUC_embed_sub(embed, subsubpairs, nmax))
+    })
+    # stopCluster(cl)
+    AUCpart = do.call("rbind",AUCpart)
+    rownames(AUCpart) = subgroup$source
+    AUCpart = as.data.frame(AUCpart) %>%
+      arrange(desc(num))
+    AUClist[[i]] = AUCpart
+  }
+  names(AUClist) = paste(Group$group,"(",Group$type,")",sep="")
+  return(AUClist)
+}
+
+get_AUC_cosine = function(cosine, pairs, WithNull = FALSE,
+                         dict = NULL, 
+                         interested_code = NULL,
+                         nmax = 10000, myseed = 214){
+  if(!is.null(interested_code)){
+    pairs = get_interested_pairs(pairs, interested_code)
+  }
+  pairs = pairs %>%
+    filter(code1!=code2)
+  pairs$source[which(pairs$source=="LOINC Hierachy (rm)")] = "LOINC Hierachy (LP1)"
+  if(!is.null(dict)) dict = dict %>% filter(code%in%rownames(cosine))
+  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){
+    pairs = pairs %>%
+      filter(code1%in%rownames(cosine) & code2%in%rownames(cosine)) %>%
+      filter(nullcode1%in%rownames(cosine) & nullcode2%in%rownames(cosine))
+  }else{
+    cat("## Generating Null Pairs ####","\n")
+    set.seed(myseed)
+    pairs = get_nullpairs(pairs, dict)
+  }
+  group = pairs %>%
+    dplyr::select(type, group, source) %>%
+    unique()
+  Group = group %>%
+    dplyr::select(type, group) %>%
+    unique() %>%
+    arrange(group, desc(type))
+  
+  cat("## Computing AUC ####","\n")
+  AUClist = list()
+  for(i in 1:nrow(Group)){
+    subgroup = group %>%
+      filter(type == Group$type[i] & group == Group$group[i])
+    subpairs = pairs %>%
+      filter(type == Group$type[i] & group == Group$group[i])
+    # cl = makeCluster(detectCores()-1)
+    # clusterExport(cl, c("subpairs","subgroup","embed"), 
+    #               envir = environment())
+    AUCpart = lapply(1:nrow(subgroup), function(j){
+      # source(paste(wkd,'Compute_AUC.R',sep=""))
+      subsubpairs = subpairs %>% 
+        filter(source == subgroup$source[j])
+      return(get_AUC_cosine_sub(cosine, subsubpairs, nmax))
+    })
+    # stopCluster(cl)
+    AUCpart = do.call("rbind",AUCpart)
+    rownames(AUCpart) = subgroup$source
+    AUCpart = as.data.frame(AUCpart) %>%
+      arrange(desc(num))
+    AUClist[[i]] = AUCpart
+  }
+  names(AUClist) = paste(Group$group,"(",Group$type,")",sep="")
+  return(AUClist)
+}
+
+```
+
+## Function: `get_AUC_cosine_sub`
+
+**Description:**  
+Computes the AUC for a subset of code pairs using a cosine similarity matrix.
+
+**Inputs:**
+- `cosine`: A square matrix of cosine similarity values.
+- `pairs`: A data frame containing `code1`, `code2`, `nullcode1`, and `nullcode2`.
+- `nmax`: (Optional) Maximum number of samples for AUC computation. Default is `10000`.
+
+**Output:**  
+Named numeric vector with:
+- `'auc'`: AUC score.
+- `'num'`: Number of evaluated pairs.
+
+---
+
+## Function: `get_AUC_embed_sub`
+
+**Description:**  
+Computes the AUC using the dot product of embedding vectors for each code pair.
+
+**Inputs:**
+- `embed`: A matrix where rows are embeddings of codes.
+- `pairs`: A data frame with code and nullcode pairs.
+- `nmax`: (Optional) Max number of samples. Default is `10000`.
+
+**Output:**  
+Named numeric vector with:
+- `'auc'`: AUC score.
+- `'num'`: Number of evaluated pairs.
+
+---
+
+## Function: `get_nullpairs`
+
+**Description:**  
+Generates negative (null) code pairs within matched code groups.
+
+**Inputs:**
+- `pairs`: Data frame with positive code pairs.
+- `dict`: A data frame with code-to-group mappings.
+
+**Output:**  
+Modified `pairs` data frame with new columns: `nullcode1` and `nullcode2`.
+
+---
+
+## Function: `get_interested_pairs`
+
+**Description:**  
+Filters pairs where either code matches a set of "interested" codes.
+
+**Inputs:**
+- `pairs`: Data frame of code pairs.
+- `interested_code`: A character vector of target codes.
+
+**Output:**  
+Filtered subset of the input `pairs`.
+
+---
+
+## Function: `get_merge_pairs`
+
+**Description:**  
+Merges selected sources in `pairs` based on `merged` groupings.
+
+**Inputs:**
+- `pairs`: Data frame with code pairs and metadata.
+- `merged`: A named list specifying which `source` values to merge.
+- `oldremain`: If `TRUE`, retains original pairs not in `merged`. Default is `FALSE`.
+
+**Output:**  
+Data frame of merged and (optionally) unmerged code pairs.
+
+---
+
+## Function: `get_AUC_embed`
+
+**Description:**  
+Computes AUC scores for grouped code pairs using embeddings.
+
+**Inputs:**
+- `embed`: Matrix of embeddings.
+- `pairs`: Data frame of code pairs.
+- `WithNull`: Whether to use existing null pairs. Default `FALSE`.
+- `dict`: Code-to-group data frame. Used if generating null pairs.
+- `normalize`: Whether to normalize embeddings. Default `FALSE`.
+- `interested_code`: Optional list of codes to filter the pairs.
+- `nmax`: Max number of sample pairs. Default `10000`.
+- `myseed`: Seed for reproducibility. Default `214`.
+
+**Output:**  
+Named list of data frames, each containing AUC results by source.
+
+---
+
+## Function: `get_AUC_cosine`
+
+**Description:**  
+Computes AUC scores for grouped code pairs using a cosine similarity matrix.
+
+**Inputs:**
+- `cosine`: Cosine similarity matrix.
+- `pairs`: Data frame of code pairs.
+- `WithNull`: Use existing null pairs. Default `FALSE`.
+- `dict`: Code-to-group data frame.
+- `interested_code`: Optional filtering of code pairs.
+- `nmax`: Max samples per subgroup. Default `10000`.
+- `myseed`: Random seed. Default `214`.
+
+**Output:**  
+Named list of data frames with AUC results per code group and source.

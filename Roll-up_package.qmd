@@ -1,0 +1,17 @@
+---
+title: "Roll-up Guidance"
+execute: 
+  enabled: false
+---
+
+## Detail 
+
+This package provides valuable roll-up codes for EHR data processing. It includes a variety of functions, such as:
+
+- [rollup](rollup_function.qmd)
+
+- [summarize_unmapped](summarize_unmapped_function.qmd)
+
+- [filter_rolledup_data](filter_rollup_data_function.qmd)
+
+- [rollup_data_by_batch](rollup_data_by_batch_function.qmd)

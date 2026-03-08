@@ -1,0 +1,44 @@
+project:
+  type: website
+
+website:
+  title: PEHRT
+  navbar:
+    background: primary
+    search: true
+    left:
+      - icon: house
+        text: " "
+        href: index.qmd
+      - sidebar:M1
+      - text: "Module 2: Representation Learning"
+        href: m2.qmd
+      - text: "References"
+        href: references.qmd
+
+  sidebar:
+    - id: M1
+      title: "Module 1: Data Preprocessing"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents: 
+        - EHR-Pipeline-Part1.ipynb
+        - EHR-Pipeline-Part2.ipynb
+        - EHR-Pipeline-Part3.ipynb
+        - EHR-Pipeline-Part4.ipynb
+        - EHR-Pipeline-Part5.ipynb
+    
+ # optional, tune to taste
+
+format:
+  html:
+    page-layout: full
+    grid:
+      body-width: 1000px 
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+execute:
+  freeze: auto

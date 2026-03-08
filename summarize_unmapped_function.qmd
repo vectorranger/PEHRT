@@ -1,0 +1,42 @@
+---
+title: "summarize_unmapped"
+execute: 
+  enabled: false
+---
+
+## Description
+
+The `summarize_unmapped` function extracts and summarizes unmapped child entities, identifying their frequency in the data.
+
+```{python}
+def summarize_unmapped(rolledup_data, child_column):
+    
+    rolledup_data_unmapped = rolledup_data[rolledup_data["Rollup_Status"]=="0"]
+    
+    unique_patient_code_pairs = rolledup_data_unmapped[['subject_id', child_column]].drop_duplicates()
+
+    unmapped_code_frequencies = unique_patient_code_pairs[[child_column]].value_counts().reset_index(name='counts')
+
+    unmapped_code_frequencies = unmapped_code_frequencies.rename(columns={'index': child_column})
+    
+    return unmapped_code_frequencies
+```
+
+## Input
+
+1. **rolledup_data** (pandas.DataFrame):  
+   The DataFrame resulting from the `rollup` function, which includes the `Rollup_Status` column.
+
+2. **child_column** (str):  
+   The name of the column representing child entities in the rollup process.
+
+## Output
+
+- **unmapped_code_frequencies** (pandas.DataFrame):  
+  A DataFrame containing two columns:
+  - `child_column`: The unique unmapped child entities.
+  - `counts`: The frequency of each unmapped entity.
+
+## See also
+
+See [Roll-up_package](Roll-up_package.qmd).

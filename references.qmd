@@ -1,0 +1,10 @@
+---
+title: "References"
+---
+
+# All functions
+|                                    |                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------- |
+| [BONMI_package](BONMI_package.qmd) | Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices |
+| [text_encode](text_encode.qmd) | TextEncoder in module 2 |
+| [get_AUC_MS](get_AUC_MS.qmd) | get_AUC_MS function in Module 2 |
