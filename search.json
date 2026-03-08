@@ -1,0 +1,1108 @@
+[
+  {
+    "objectID": "setup/data-overview.html",
+    "href": "setup/data-overview.html",
+    "title": "Data Overview",
+    "section": "",
+    "text": "After gaining access, it is essential to develop a thorough understanding of the EHR data to assemble the elements of interest and create a dataset aligned with the research objectives. This typically involves answering the following questions:\nThese questions are typically addressed by consulting institution-specific EHR documentation or the warehouse data manager. For MIMIC-IV, comprehensive documentation is available here.",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "setup/data-overview.html#what-data-is-available",
+    "href": "setup/data-overview.html#what-data-is-available",
+    "title": "Data Overview",
+    "section": "What Data is Available?",
+    "text": "What Data is Available?\nElectronic Health Record (EHR) data can take many forms. For example, billing information and vital signs are typically recorded as tabular data, clinical notes are in free text format, ECG recordings generate waveform data, and procedures such as X-rays generate image data.\nMIMIC-IV data comes in “modules” based on the source of data generation:\n\nhosp — Hospital-level data for patients, including labs, microbiology, and electronic medication administration records\nicu — ICU-level data, including event tables identical in structure to MIMIC-III\ned — Data from the emergency department\ncxr — Lookup tables and metadata from MIMIC-CXR\nnote — De-identified free-text clinical notes\n\n\n\n\n\n\n\n\n\n\n\nData type\nData contents\nAvailable at\nMajor tables/files\nPrimary timestamps\n\n\n\n\nDiagnoses\nICD-9/10 diagnosis codes per admission\nMIMIC-IV (hosp)\ndiagnoses_icd, d_icd_diagnoses\nAdmission window (admittime, dischtime)\n\n\nProcedures\nICD-9/10-PCS, CPT/HCPCS events\nMIMIC-IV (hosp)\nprocedures_icd, hcpcsevents, d_icd_procedures, d_hcpcs\nAdmission window; event dates\n\n\nMedications\nOrders & administrations\nMIMIC-IV (hosp)\nprescriptions, emar, emar_detail\nstarttime, stoptime, charttime\n\n\nLaboratory results\nResults + units\nMIMIC-IV (hosp)\nlabevents, d_labitems\ncharttime\n\n\nMicrobiology\nCultures, organisms, sensitivities\nMIMIC-IV (hosp)\nmicrobiologyevents\ncharttime\n\n\nICU flowsheets\nVitals, assessments, outputs\nMIMIC-IV (icu)\nchartevents, outputevents, icustays, d_items\ncharttime\n\n\nClinical notes\nDischarge, radiology, etc.\nMIMIC-IV-Note\nnote\ncharttime\n\n\nChest X-ray images\nDICOM/JPG + metadata\nMIMIC-CXR\nImage files + metadata CSVs\nStudy/acquisition time\n\n\nECG waveforms\n10-sec, 12-lead diagnostic ECG\nMIMIC-IV-ECG\nWFDB waveform files + metadata\nAcquisition time\n\n\nED stays\nTriage, meds, vitals\nMIMIC-IV-ED\nedstays, triage, vitalsign\nED times\n\n\n\nFor this tutorial, we work with the MIMIC-IV hosp and note modules.",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "setup/data-overview.html#key-data-elements",
+    "href": "setup/data-overview.html#key-data-elements",
+    "title": "Data Overview",
+    "section": "Key Data Elements",
+    "text": "Key Data Elements\n\n\n\n\n\n\n\n\nKey data element\nDescription\nExamples in MIMIC-IV\n\n\n\n\nUnique Patient ID\nPatient identifier used across all tables and encounters\nsubject_id\n\n\nEvent\nA clinical record that something happened/was recorded\nDiagnoses (diagnoses_icd); Meds (prescriptions); Labs (labevents); Procedures (procedures_icd, hcpcsevents)\n\n\nTime\nWhen the event occurred or was recorded\nEvent times (charttime, starttime, stoptime); admission window (admittime, dischtime) from admissions",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "setup/data-overview.html#mimic-iv-hosp-module-tables",
+    "href": "setup/data-overview.html#mimic-iv-hosp-module-tables",
+    "title": "Data Overview",
+    "section": "MIMIC-IV hosp Module Tables",
+    "text": "MIMIC-IV hosp Module Tables\n\n\n\n\n\n\n\n\n\n\n\n\nType\nTable\nPurpose\nKey element(s)\nPrimary code fields\nPrimary time field(s)\nJoin keys\n\n\n\n\nData Dictionary\nd_hcpcs\nCPT/HCPCS code definitions\nCodes\nhcpcs_cd\n—\nhcpcsevents.hcpcs_cd\n\n\nData Dictionary\nd_icd_diagnoses\nICD-9/10 diagnosis code definitions\nCodes\nicd_code, icd_version\n—\ndiagnoses_icd\n\n\nData Dictionary\nd_icd_procedures\nICD-9/10 procedure code definitions\nCodes\nicd_code, icd_version\n—\nprocedures_icd\n\n\nData Dictionary\nd_labitems\nLab item dictionary\nCodes\nitemid\n—\nlabevents.itemid\n\n\nEvent Table\ndiagnoses_icd\nBilled ICD diagnosis codes per hospitalization\nPatient ID, Event, Codes\nicd_code, icd_version\nAdmission window\nsubject_id, hadm_id\n\n\nEvent Table\nprescriptions\nMedication orders\nPatient ID, Event, Time\nLocal drug fields / ndc\nstarttime, stoptime\nsubject_id, hadm_id\n\n\nEvent Table\nlabevents\nLaboratory measurements\nPatient ID, Event, Time, Codes\nitemid\ncharttime\nsubject_id, hadm_id\n\n\nEvent Table\nhcpcsevents\nCPT/HCPCS billed events\nPatient ID, Event, Time, Codes\nhcpcs_cd\nchartdate\nsubject_id, hadm_id\n\n\nEvent Table\nprocedures_icd\nICD-9/10-PCS billed procedures\nPatient ID, Event, Codes\nicd_code, icd_version\nAdmission window\nsubject_id, hadm_id\n\n\nPatient Metadata\nadmissions\nAdmission episodes\nPatient ID, Time\n—\nadmittime, dischtime\nsubject_id, hadm_id\n\n\nPatient Metadata\ntransfers\nUnit/ward movements\nPatient ID, Time\n—\nintime, outtime\nsubject_id, hadm_id\n\n\nPatient Metadata\npatients\nDemographics and anchor fields\nPatient ID\n—\ndate of death (opt.)\nsubject_id",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "setup/data-overview.html#linking-data-across-tables",
+    "href": "setup/data-overview.html#linking-data-across-tables",
+    "title": "Data Overview",
+    "section": "Linking Data Across Tables",
+    "text": "Linking Data Across Tables\nIn EHR data, information is spread across multiple tables. Three major identifiers are used in MIMIC:\n\nSUBJECT_ID — Patient-level identifier. The patients table contains demographics for each unique patient.\nHADM_ID — Hospital admission-level identifier. Each unique hospital admission gets a unique ID.\nSTAY_ID — ICU stay identifier. All ICU admissions within 24 hours of each other are grouped.",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "setup/data-overview.html#exploring-the-data",
+    "href": "setup/data-overview.html#exploring-the-data",
+    "title": "Data Overview",
+    "section": "Exploring the Data",
+    "text": "Exploring the Data\nWe now explore individual tables in the MIMIC-IV hosp module and summarize them, starting with patient demographics and then diagnoses, medications, labs, and procedures.\n\n\n\n\n\n\nImportant\n\n\n\nOne critical aspect of processing EHR data is ensuring that you account for every EHR code.\n\n\n\nPatient Demographics\n\nimport os\nimport pandas as pd\nfrom collections import defaultdict\nimport heapq\nfrom wordcloud import WordCloud\nimport matplotlib.pyplot as plt\n\nWORKSPACE_DIR = \"/path/to/your/EHR_TUTORIAL_WORKSPACE\"\n\ndemographics_file = os.path.join(WORKSPACE_DIR, \"raw_data\", \"structured_data\",\n    \"physionet.org\", \"files\", \"mimiciv\", \"3.1\", \"hosp\", \"patients.csv\")\n\ndemographics = pd.read_csv(demographics_file, dtype=str)\ndemographics.head()\n\n  subject_id gender anchor_age anchor_year anchor_year_group         dod\n0   10000032      F         52        2180       2014 - 2016  2180-09-09\n1   10000048      F         23        2126       2008 - 2010         NaN\n2   10000058      F         33        2168       2020 - 2022         NaN\n3   10000068      F         19        2160       2008 - 2010         NaN\n4   10000084      M         72        2160       2017 - 2019  2161-02-13\nThere are 364,627 patients in the MIMIC-IV hospital dataset. Around 52% of the cohort are female. Ages over 89 are depicted as 90+ to comply with HIPAA privacy regulations, and no age data exists for patients under 18.\n\ndemographics.describe()\nprint(\"Missing records:\", demographics.isna().sum())\n\n# Age distribution\nage_counts = demographics['anchor_age'].value_counts().sort_index()\nplt.figure(figsize=[12, 8])\nplt.bar(age_counts.index, age_counts.values, color='skyblue')\nplt.xticks(range(0, 100, 10))\nplt.xlabel('Age (years)')\nplt.ylabel('Number of Patients')\nplt.title('Patient Age Distribution')\nplt.show()\n\n# Gender distribution\ngender_counts = demographics['gender'].value_counts()\nplt.figure(figsize=(8, 6))\nplt.bar(gender_counts.index, gender_counts.values,\n        color=[{'F': 'lightpink', 'M': 'lightblue'}[g] for g in gender_counts.index])\nplt.xlabel('Gender')\nplt.ylabel('Number of Patients')\nplt.title('Patient Gender Distribution')\nplt.show()\n\n\n\nDiagnoses Data\nIn U.S. healthcare systems, diagnoses are documented using ICD (International Classification of Diseases) codes. Two versions are in use:\n\nICD-9: used until October 1, 2015\nICD-10: starting October 1, 2015\n\nThe same diagnosis uses different codes depending on when it was recorded. For example, essential hypertension is 4019 under ICD-9 and I10 under ICD-10.\n\ndiagnoses_icd_file = os.path.join(WORKSPACE_DIR, \"raw_data\", \"structured_data\",\n    \"physionet.org\", \"files\", \"mimiciv\", \"3.1\", \"hosp\", \"diagnoses_icd.csv\")\ndiagnoses_icd = pd.read_csv(diagnoses_icd_file, dtype=str)\ndiagnoses_icd.head()\n\n  subject_id   hadm_id seq_num icd_code icd_version\n0   10000032  22595853       1     5723           9\n1   10000032  22595853       2    78959           9\n2   10000032  22595853       3     5715           9\n3   10000032  22595853       4    07070           9\n4   10000032  22595853       5      496           9\nThere are 223,291 patients in the diagnoses_icd table (68% of total patients). The remaining patients were seen only in the emergency department.\n\nBatch Summarization Function\nFor larger datasets (e.g., lab data with 158M+ rows), we define a batch summarization function:\n\ndef get_basic_summary(filepath, cols_to_summarize, batch_size):\n    frequencies = defaultdict(lambda: defaultdict(int))\n    non_null_records_count = defaultdict(int)\n    total_records_count = 0\n\n    for batch in pd.read_csv(filepath, usecols=cols_to_summarize,\n                             chunksize=batch_size, dtype=str):\n        total_records_count += len(batch)\n        for column in batch.columns:\n            non_null_records_count[column] += batch[column].notnull().sum()\n            value_counts = batch[column].value_counts()\n            for value, count in value_counts.items():\n                frequencies[column][value] += count\n\n    freq_table = [\n        (column, len(frequencies[column]), non_null_records_count[column])\n        for column in frequencies\n    ]\n    summary = pd.DataFrame(freq_table,\n                           columns=[\"Column_Name\", \"Unique_Values\", \"Non_Null_Records\"])\n    return {'summary': summary, 'column_freq': frequencies, 'records': total_records_count}\n\n\n\nPatient-Level Code Counts\nTo estimate disease cohort size, count unique (subject_id, icd_code) pairs:\n\nicd_counts = (\n    diagnoses_icd\n    .groupby(['icd_code', 'icd_version'], as_index=False)['subject_id']\n    .nunique()\n    .rename(columns={'subject_id': 'patient_count'})\n    .sort_values('patient_count', ascending=False)\n)\nicd_counts.head()\n\n      icd_code icd_version  patient_count\n2801      4019           9          52360\n12953      I10          10          48611\n10049     E785          10          45431\n1342      2724           9          35210\n28363   Z87891          10          32523\n\n\n\n\n\n\nICD Version Transition\n\n\n\nIf your study spans the Oct 2015 transition, include both ICD-9 and ICD-10 code sets. For example, essential hypertension is 4019 (ICD-9) and I10 (ICD-10). See ICD-9 vs ICD-10 comparison.\n\n\n\n\nData Dictionary Lookup\nJoining with d_icd_diagnoses provides human-readable code descriptions:\n\nd_icd_path = os.path.join(WORKSPACE_DIR, \"raw_data\", \"structured_data\",\n    \"physionet.org\", \"files\", \"mimiciv\", \"3.1\", \"hosp\", \"d_icd_diagnoses.csv\")\n\nsorted_icdcode_frequencies_w_def = (\n    icd_counts\n    .merge(\n        pd.read_csv(d_icd_path, dtype=str, usecols=[\"icd_code\", \"icd_version\", \"long_title\"]),\n        on=[\"icd_code\", \"icd_version\"], how=\"left\"\n    )\n    .sort_values(\"patient_count\", ascending=False)\n)\nsorted_icdcode_frequencies_w_def.head()\n\n  icd_code icd_version                               long_title  patient_count\n0     4019           9       Unspecified essential hypertension          52360\n1      I10          10         Essential (primary) hypertension          48611\n2     E785          10              Hyperlipidemia, unspecified          45431\n3     2724           9     Other and unspecified hyperlipidemia          35210\n4   Z87891          10  Personal history of nicotine dependence          32523\n\n\n\nReusable Summary Functions\nWe define two reusable functions for generating comprehensive summaries across all data types:\n\ndef generate_wordcloud(sorted_freq_df, code_desc_column):\n    word_freq = {}\n    for index, row in sorted_freq_df.iterrows():\n        title = row[code_desc_column]\n        count = row['counts']\n        word_freq[title] = word_freq.get(title, 0) + count\n\n    wordcloud = WordCloud(\n        width=1200, height=800, background_color='white',\n        colormap='viridis', prefer_horizontal=0.9, max_words=100,\n        contour_width=1, contour_color='black'\n    ).generate_from_frequencies(word_freq)\n\n    plt.figure(figsize=(12, 8))\n    plt.imshow(wordcloud, interpolation='bilinear')\n    plt.axis('off')\n    plt.tight_layout(pad=0)\n    plt.show()\n    return wordcloud\n\n\ndef file_line_count(filepath):\n    count = 0\n    with open(filepath, 'r') as file:\n        for line in file:\n            count += 1\n    return count\n\nThese functions are then applied to summarize Diagnoses, Procedures (HCPCS + ICD), Medications (NDC), and Labs — producing summary CSVs and wordcloud visualizations saved to processed_data/Summary/.\n\n\nSummary Output\nAt the end, you will have the following files generated under EHR_TUTORIAL_WORKSPACE/processed_data/Summary/:\n\ndiagnoses_basic_summary.csv, diagnoses_icd_wordcloud.png\nhcpcsevents_basic_summary.csv, hcpcsevents_wordcloud.png\nprocedures_icd_basic_summary.csv, procedures_icd_wordcloud.png\nprescriptions_basic_summary.csv, prescriptions_wordcloud.png\nlabevents_basic_summary.csv, labevents_wordcloud.png",
+    "crumbs": [
+      "Data Overview"
+    ]
+  },
+  {
+    "objectID": "module2/index.html",
+    "href": "module2/index.html",
+    "title": "Module 2: Representation Learning",
+    "section": "",
+    "text": "After data pre-processing, PEHRT performs representation learning for various downstream tasks. A co-occurrence matrix is built by tracking patient events over a set time for each code and CUI. This matrix is then converted into a pointwise mutual information (SPPMI) matrix, which shows relationships among codes and CUIs. By applying singular value decomposition (SVD), embedding vectors are created for further analysis, such as building medical knowledge graphs or selecting features for risk prediction.",
+    "crumbs": [
+      "Representation Learning"
+    ]
+  },
+  {
+    "objectID": "module2/index.html#step-2.1-ehr-embedding-training",
+    "href": "module2/index.html#step-2.1-ehr-embedding-training",
+    "title": "Module 2: Representation Learning",
+    "section": "Step 2.1: EHR Embedding training",
+    "text": "Step 2.1: EHR Embedding training\nHere we use the rolled up MIMIC data which are the output from Module 1 Step 2. This script combines them into a single data frame for further analysis.\n├─Diagnoses\n│      rolledup_batch1.csv\n│      rolledup_batch2.csv\n│      rolledup_batch3.csv\n│      rolledup_batch4.csv\n│      rolledup_batch5.csv\n│      rolledup_batch6.csv\n│      rolledup_batch7.csv\n│      rolledup_batch8.csv\n├─Labs\n|      rolledup_batch1.csv\n│      rolledup_batch2.csv\n│      rolledup_batch3.csv\n│      rolledup_batch4.csv\n│      rolledup_batch5.csv\n│      rolledup_batch6.csv\n│      rolledup_batch7.csv\n│      rolledup_batch8.csv\n├─Medication\n|      rolledup_batch1.csv\n│      rolledup_batch2.csv\n│      rolledup_batch3.csv\n│      rolledup_batch4.csv\n│      rolledup_batch5.csv\n│      rolledup_batch6.csv\n│      rolledup_batch7.csv\n│      rolledup_batch8.csv\n├─Procedures\n|      rolledup_batch1.csv\n│      rolledup_batch2.csv\n│      rolledup_batch3.csv\n│      rolledup_batch4.csv\n│      rolledup_batch5.csv\n│      rolledup_batch6.csv\n│      rolledup_batch7.csv\n│      rolledup_batch8.csv\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\n\n### Load data\nlibrary(dplyr)\nfolder_path &lt;- \"/home/EHR/monthly_counts_mimic/grouped/Diagnoses\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\ndiagnoses_dataframes &lt;- lapply(csv_files, read.csv)\n\nfolder_path &lt;- \"/home/EHR/monthly_counts_mimic/grouped/Labs\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\nlabs_dataframes &lt;- lapply(csv_files, read.csv)\n\nfolder_path &lt;- \"/home/EHR/monthly_counts_mimic/grouped/Medication\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\nmedication_dataframes &lt;- lapply(csv_files, read.csv)\n\nfolder_path &lt;- \"/home/EHR/monthly_counts_mimic/grouped/Procedures\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\nprocedures_dataframes &lt;- lapply(csv_files, read.csv)\n\n### Combine dataframe\ncombined_batches &lt;- list()\n\nfor (i in 1:8) {\n  diag &lt;- diagnoses_dataframes[[i]]\n  labs &lt;- labs_dataframes[[i]]\n  meds &lt;- medication_dataframes[[i]]\n  procs &lt;- procedures_dataframes[[i]]\n\n  combined &lt;- rbind(diag, labs, meds, procs)\n\n  combined_batches[[i]] &lt;- combined\n}\n\nall_combined_data &lt;- bind_rows(combined_batches)\n\nThis tutorial demonstrates how to use our own nlpembeds library to generate co-occurrence matrices, SPPMI matrices, and embeddings.\n\ninstall.packages(\"nlpembeds\")\n### SVD_PMI Embedding\nlibrary(nlpembeds)\n\nget_svd_pmi_embedding &lt;- function(combined_df){\n  # build_df_cooc, get_pmi, get_svd functions are from nlpembeds package\n  spm_cooc = build_df_cooc(combined_df)\n  m_pmi = get_pmi(spm_cooc)\n  m_svd = get_svd(m_pmi, embedding_dim = 1400)\n  return(m_svd)\n}\n\nall_combined_m_svd &lt;- get_svd_pmi_embedding(all_combined_data)\n\nThe SVD is computed with “random SVD”, an efficient approximation of truncated SVD, in which only the first principal components are returned. It is computed with the rsvd package, and the author suggests that the number of dimensions requested k should follow: k &lt; n / 4, where n is the number of features, for it to be efficient, and that otherwise one should rather use either SVD or truncated SVD. Given that the matrix m_pmi has dimensions 5809*5809, we pick a rank of 1400 here.",
+    "crumbs": [
+      "Representation Learning"
+    ]
+  },
+  {
+    "objectID": "module2/index.html#step-2.2-plm-based-embeddings",
+    "href": "module2/index.html#step-2.2-plm-based-embeddings",
+    "title": "Module 2: Representation Learning",
+    "section": "Step 2.2: PLM-based embeddings",
+    "text": "Step 2.2: PLM-based embeddings\nEHR data can be effectively represented using Pre-trained Language Models (PLMs) by leveraging the descriptions or names of codes and CUIs.\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the Python programming language.\n\n\nTo learn more about the TextEncoder class, visit the documentation.\nThe input file codifed_codes_desc.csv is a CSV file where the first column contains different codes and the second column contains the corresponding description.\n```{python}\nimport pandas as pd\nimport os\nimport torch\nfrom text_encode import TextEncoder, config_dict\nfrom collections import defaultdict\n\n# Step 1: Load the definitions CSV into a Pandas DataFrame\ndf = pd.read_csv('codifed_codes_desc.csv')\ndf.head()\n```\n\n\n\n\n\n\n\n\nid\n\n\nterm\n\n\n\n\n\n\n0\n\n\nLOINC:1000-9\n\n\nDBG Ab SerPl BPU Ql\n\n\n\n\n1\n\n\nLOINC:100019-9\n\n\nALK gene Mut Anl Bld/T\n\n\n\n\n2\n\n\nLOINC:100020-7\n\n\nGNA11 gene Mut Anl Bld/T\n\n\n\n\n3\n\n\nLOINC:100021-5\n\n\nGNAQ gene Mut Anl Bld/T\n\n\n\n\n4\n\n\nLOINC:100022-3\n\n\nIDH1 gene Mut Anl Bld/T\n\n\n\n\n\n```{python}\n# Step 2: Separate the dictionary keys (codes) and values (descriptions) into lists\ncode_name = df['id'].tolist()\ncode_desc = df['term'].tolist()\n\n# Configuration parameters for generating embeddings\n# Available models from Hugging Face\nconfigs = (\n    \"coder\", # GanjinZero/coder_eng\n    \"coder_pp\", # GanjinZero/coder_eng_pp\n    \"sapbert\", # cambridgeltl/SapBERT-from-PubMedBERT-fulltext\n    \"pubmedbert\", # microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext\n    \"biobert\", # monologg/biobert_v1.1_pubmed\n    \"bert\", # bert-base-uncased\n    \"coder_all\" # GanjinZero/coder_all\n)\n\nconfig = \"coder\"  # Select the embedding model configuration\nmethod = \"CLS\"  # Specify the embedding method\noutput_data_dir = \"./\"  # Directory to save the output embeddings\n\nprint(f\"Generating embeddings for {config} with {method} embedding...\")\n\n# Step 3: Set up embedding parameters\nembed_params = {\n    \"normalize\": True,  # Normalize embeddings\n    \"summary_method\": method  # Summary method for embedding generation\n}\noutput_file_name = f\"{config}_{embed_params['summary_method']}\"\noutput_file_path = os.path.join(output_data_dir, output_file_name)\n\n# Step 4: Initialize the TextEncoder and generate embeddings\ndevice = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Use GPU if available\nencoder = TextEncoder(config, device)\nembeddings = encoder.get_embed(code_desc, **embed_params)\n\n# Step 5: Save the embeddings to a file\nwith open(output_file_path, \"w\") as f:\n    for cid, embedding in zip(code_name, embeddings):\n        line = [str(cid)] + [str(each) for each in embedding]  # Combine code ID and embedding values\n        line = \",\".join(line) + \"\\n\"  # Format as a comma-separated line\n        f.write(line)\n```",
+    "crumbs": [
+      "Representation Learning"
+    ]
+  },
+  {
+    "objectID": "module2/index.html#step-2.3-joint-multi-institution-ehr-embedding-training",
+    "href": "module2/index.html#step-2.3-joint-multi-institution-ehr-embedding-training",
+    "title": "Module 2: Representation Learning",
+    "section": "Step 2.3: Joint multi-institution EHR embedding training",
+    "text": "Step 2.3: Joint multi-institution EHR embedding training\nThe Block-wise Overlapping Noisy Matrix Integration (BONMI) algorithm helps combine data from different sources by aligning and completing SPPMI (Pointwise Mutual Information) matrices.\nIt populates this matrix by averaging SPPMI values from contributing institutions when overlaps exist and imputing missing values using orthogonal transformations. This approach enables the creation of a shared data representation, facilitating collaborative analysis across diverse datasets.\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\nHere we use same rolled up MIMIC data as above. The following script performs necessary preprocessing steps for BONMI analysis.\n\n### BONMI\nget_BONMI_embedding &lt;- function(input_dfs){\n  # Initialize variables\n  W = list()\n  s = 0\n  r = 1400\n  for(input_df in input_dfs) {\n    s = s + 1\n    spm_cooc = build_df_cooc(input_df)\n    m_pmi = get_pmi(spm_cooc)\n    W[[s]] = m_pmi\n  }\n\n  # Apply the BONMI algorithm\n  Xhat &lt;- BONMI(W, r, weights=NULL, rsvd.use=FALSE)\n  return(Xhat)\n}\n\ncombined_m_BONMI &lt;- get_BONMI_embedding(combined_batches)",
+    "crumbs": [
+      "Representation Learning"
+    ]
+  },
+  {
+    "objectID": "module2/index.html#step-2.4-embedding-validation",
+    "href": "module2/index.html#step-2.4-embedding-validation",
+    "title": "Module 2: Representation Learning",
+    "section": "Step 2.4: Embedding Validation",
+    "text": "Step 2.4: Embedding Validation\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\nTo evaluate the performance of our similarity-based prediction model, we use known concept relationships as true positives. In clinical contexts, these relationships are curated by experts. AUC (Area Under the Curve) is a key metric for assessing model accuracy, requiring an equal number of true positives and true negatives—so for each known pair, we generate a random comparison.\nThe known pairs dataset is derived from the Unified Medical Language System (UMLS), and access to this data requires possession of a valid UMLS Metathesaurus License.\n\n# Load the known pairs data from UMLS\nload(file='/home/EHR/code_share/code_share/PairsAlltypeUMLS_05122024.Rdata')\nsource('/home/EHR/code_share/code_share/get_AUC_MS.R')\n# Define evaluate function\nMyeval&lt;-function(embed){\n  dict &lt;- data.frame(code = rownames(embed))\n  dict$group &lt;- sapply(dict$code, function(x) strsplit(x,\":\")[[1]][1])\n  AUC &lt;- get_AUC_embed(embed = embed, pairs = pairs, WithNull = FALSE, dict = dict,\n                       normalize = FALSE, interested_code = NULL, nmax = 10000, myseed = 214)\n  sim = AUC$`codi-codi(similar)`\n  rel = AUC$`codi-codi(related)`\n  sim = sim[sim[,2]&gt;50,]\n  rel = rel[rel[,2]&gt;50,]\n\n  AUC$weighted_sim = c('auc'=sum(sim[,1]*sim[,2])/sum(sim[,2]),'num'=sum(sim[,2]),'dim'=nrow(embed))\n  AUC$weighted_rel = c('auc'=sum(rel[,1]*rel[,2])/sum(rel[,2]),'num'=sum(rel[,2]),'dim'=nrow(embed))\n  AUC\n}\n\n# Evaluate the AUC of SVD_PMI and BONMI\nauc.SVD_PMI = Myeval(all_combined_m_svd)\nauc.BONMI = Myeval(combined_m_BONMI)\nround(auc.SVD_PMI$weighted_sim, 3)\nround(auc.SVD_PMI$weighted_rel, 3)\nround(auc.BONMI$weighted_sim, 3)\nround(auc.BONMI$weighted_rel, 3)\n\n# SVD_PMI, similar\n      auc       num       dim\n    0.757 14376.000  5809.000\n# SVD_PMI, related\n      auc       num       dim\n    0.695 18024.000  5809.000\n# BONMI, similar\n      auc       num       dim\n    0.811 13209.000  4964.000\n# BONMI, related\n      auc       num       dim\n    0.793 17124.000  4964.000\n\n# Evaluate the AUC of PLM embeddings\nauc.coder = Myeval(coder)\nauc.sapbert = Myeval(sapbert)\nauc.biobert = Myeval(biobert)\nauc.pubmedbert = Myeval(pubmedbert)\nauc.sim = rbind(CODER = auc.coder$weighted_sim,SAPBERT = auc.sapbert$weighted_sim,\n                BioBERT = auc.biobert$weighted_sim, PubmedBERT = auc.pubmedbert$weighted_sim)\nauc.rel =rbind(CODER = auc.coder$weighted_rel,SAPBERT = auc.sapbert$weighted_rel,\n               BioBERT = auc.biobert$weighted_rel, PubmedBERT = auc.pubmedbert$weighted_rel)\nround(auc.sim,3)\nround(auc.rel,3)\n\n# sim\n#       auc   num   dim\n# CODER      0.941 18760 16762\n# SAPBERT    0.826 18760 16762\n# BioBERT    0.564 18760 16762\n# PubmedBERT 0.567 18760 16762\n# rel\n#       auc   num   dim\n# CODER      0.801 23677 16762\n# SAPBERT    0.795 23677 16762\n# BioBERT    0.600 23677 16762\n# PubmedBERT 0.589 23677 16762",
+    "crumbs": [
+      "Representation Learning"
+    ]
+  },
+  {
+    "objectID": "rollup_function.html",
+    "href": "rollup_function.html",
+    "title": "rollup",
+    "section": "",
+    "text": "The rollup function merges raw data with a rollup mapping table to establish hierarchical relationships. It identifies whether each record has a parent entity, adding a rollup status to the data.\n\ndef rollup(raw_level_data, rollup_mapping , join_columns, parent_column):\n    \n    rolledup_data = pd.merge(raw_level_data, rollup_mapping, how='left', on=join_columns)\n    \n    rolledup_data['Rollup_Status'] = rolledup_data[parent_column].notna().replace({True: '1', False: '0'})\n    \n    return rolledup_data"
+  },
+  {
+    "objectID": "rollup_function.html#description",
+    "href": "rollup_function.html#description",
+    "title": "rollup",
+    "section": "",
+    "text": "The rollup function merges raw data with a rollup mapping table to establish hierarchical relationships. It identifies whether each record has a parent entity, adding a rollup status to the data.\n\ndef rollup(raw_level_data, rollup_mapping , join_columns, parent_column):\n    \n    rolledup_data = pd.merge(raw_level_data, rollup_mapping, how='left', on=join_columns)\n    \n    rolledup_data['Rollup_Status'] = rolledup_data[parent_column].notna().replace({True: '1', False: '0'})\n    \n    return rolledup_data"
+  },
+  {
+    "objectID": "rollup_function.html#input",
+    "href": "rollup_function.html#input",
+    "title": "rollup",
+    "section": "Input",
+    "text": "Input\n\nraw_level_data (pandas.DataFrame):\nThe raw data at the most detailed level.\nrollup_mapping (pandas.DataFrame):\nA mapping table specifying parent-child relationships.\njoin_columns (list):\nA list of column names used to join raw_level_data with the rollup_mapping.\nparent_column (str):\nThe name of the column representing the parent in the rollup mapping."
+  },
+  {
+    "objectID": "rollup_function.html#output",
+    "href": "rollup_function.html#output",
+    "title": "rollup",
+    "section": "Output",
+    "text": "Output\n\nrolledup_data (pandas.DataFrame):\nA DataFrame that includes all columns from the merged data along with a new column, Rollup_Status, which indicates whether a record has a parent (1 for yes, 0 for no)."
+  },
+  {
+    "objectID": "rollup_function.html#see-also",
+    "href": "rollup_function.html#see-also",
+    "title": "rollup",
+    "section": "See also",
+    "text": "See also\nSee Roll-up_package."
+  },
+  {
+    "objectID": "reference/preprocessing/summarize.html",
+    "href": "reference/preprocessing/summarize.html",
+    "title": "summarize",
+    "section": "",
+    "text": "In Module 1 we load the entire data at once as diagnosis datasets is relatively small. However if the dataset is large like lab data or ECG, the data points, we would need to use other methods. Below we define a custom summarzing function to summarize larger datasets. The function reads data in batches, summarized and further provides frequency of individual EHR elements\n\ndef summarize(filepath, batch_size, dataframe=None):\n    frequencies = {}\n    non_null_records_count = {}\n    total_records_count = 0\n\n    for batch in pd.read_csv(filepath, chunksize=batch_size, dtype=str):\n\n        total_records_count += batch.shape[0]\n\n        for column in batch.columns:\n            if column not in frequencies:\n                frequencies[column] = {}\n                non_null_records_count[column] = 0\n\n            # Counting the number of non null records in each batch\n            non_null_records_count[column] += batch[column].count()\n\n            for item in batch[column]:\n                if item in frequencies[column]:\n                    frequencies[column][item] += 1\n                else:\n                    frequencies[column][item] = 1\n\n    freq_table = [\n        (column, len(frequencies[column]), non_null_records_count[column])\n        for column in frequencies\n    ]\n\n\n    summary = pd.DataFrame(\n            freq_table, columns=[\"Column_Name\", \"Unique_Values\", \"Non_Null_Records\"]\n        )\n    \n\n    return {'summary':summary,'freq':frequencies,'records':total_records_count}",
+    "crumbs": [
+      "Preprocessing",
+      "summarize"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize.html#description",
+    "href": "reference/preprocessing/summarize.html#description",
+    "title": "summarize",
+    "section": "",
+    "text": "In Module 1 we load the entire data at once as diagnosis datasets is relatively small. However if the dataset is large like lab data or ECG, the data points, we would need to use other methods. Below we define a custom summarzing function to summarize larger datasets. The function reads data in batches, summarized and further provides frequency of individual EHR elements\n\ndef summarize(filepath, batch_size, dataframe=None):\n    frequencies = {}\n    non_null_records_count = {}\n    total_records_count = 0\n\n    for batch in pd.read_csv(filepath, chunksize=batch_size, dtype=str):\n\n        total_records_count += batch.shape[0]\n\n        for column in batch.columns:\n            if column not in frequencies:\n                frequencies[column] = {}\n                non_null_records_count[column] = 0\n\n            # Counting the number of non null records in each batch\n            non_null_records_count[column] += batch[column].count()\n\n            for item in batch[column]:\n                if item in frequencies[column]:\n                    frequencies[column][item] += 1\n                else:\n                    frequencies[column][item] = 1\n\n    freq_table = [\n        (column, len(frequencies[column]), non_null_records_count[column])\n        for column in frequencies\n    ]\n\n\n    summary = pd.DataFrame(\n            freq_table, columns=[\"Column_Name\", \"Unique_Values\", \"Non_Null_Records\"]\n        )\n    \n\n    return {'summary':summary,'freq':frequencies,'records':total_records_count}",
+    "crumbs": [
+      "Preprocessing",
+      "summarize"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize.html#input",
+    "href": "reference/preprocessing/summarize.html#input",
+    "title": "summarize",
+    "section": "Input",
+    "text": "Input\nThe function accepts the following arguments:\n\nfilepath (str):\nThe path to the CSV file to be processed.\nbatch_size (int):\nThe number of rows to read at a time when processing the file in chunks. This helps handle large datasets efficiently.\ndataframe (optional, default None):\nReserved for potential future use to allow passing a DataFrame directly. Currently, it has no effect on the function.",
+    "crumbs": [
+      "Preprocessing",
+      "summarize"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize.html#output",
+    "href": "reference/preprocessing/summarize.html#output",
+    "title": "summarize",
+    "section": "Output",
+    "text": "Output\nThe function returns a dictionary containing the following keys:\n\nsummary (pandas.DataFrame):\nA DataFrame summarizing the columns in the input file. It includes the following columns:\n\nColumn_Name: The name of each column in the dataset.\nUnique_Values: The count of unique values in each column.\nNon_Null_Records: The count of non-null records for each column.\n\nfreq (dict):\nA nested dictionary where the keys are column names and the values are dictionaries mapping unique items in the column to their respective frequencies.\nrecords (int):\nThe total number of records (rows) in the CSV file.",
+    "crumbs": [
+      "Preprocessing",
+      "summarize"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-monthly-counts.html",
+    "href": "reference/preprocessing/get-monthly-counts.html",
+    "title": "get_monthly_counts_relative_to_diagnoses",
+    "section": "",
+    "text": "The get_monthly_counts_relative_to_diagnoses function calculates the monthly frequency of specified events relative to the first diagnosis date of a particular condition. It generates aggregated data files for each month within a specified range.\n\ndef get_monthly_counts_relative_to_diagnoses(diag_filename, input_file, column_name ,output_folder, index_diagnoses_code, month_start, month_end):\n    \n    diagnoses = pd.read_csv(diag_filename, dtype=str)\n    \n    inp_file = pd.read_csv(input_file, dtype=str)\n\n    filter_diagnoses = diagnoses[diagnoses['PheCode']==index_diagnoses_code]\n    \n    disease_first_diagnoses = filter_diagnoses.groupby('subject_id')['date'].min().reset_index() # Check this\n    \n    disease_first_diagnoses.columns = ['subject_id', 'index_date']\n    \n    merged_df = pd.merge(disease_first_diagnoses,inp_file[['subject_id','date',column_name]], on=\"subject_id\",how='left')\n    \n    print(merged_df)\n\n    merged_df['index_date'] = pd.to_datetime(merged_df['index_date'])\n    \n    merged_df['date'] = pd.to_datetime(merged_df['date'])\n    \n    merged_df['days_from_first_diagnosis'] = (merged_df['date'] - merged_df['index_date']).dt.days\n    print(merged_df)\n\n    print(merged_df[['index_date', 'date']].dtypes)\n    print(merged_df.isna().sum())\n\n    \n    \n    merged_df['month']=merged_df['days_from_first_diagnosis'].map(lambda x: get_month(x))\n    \n    print(merged_df)\n    \n    os.makedirs(os.path.join(\"./Aggregated_Data\", index_diagnoses_code, column_name), exist_ok=True)\n    \n    for month in range(month_start, month_end+1, 1):\n        \n        print(f\"Processing Month:{month}\")\n        \n        output_path = os.path.join(\"./Aggregated_Data\", index_diagnoses_code, column_name, f\"month_{month}.csv\")\n\n        print(output_path)\n    \n        merged_df_month = merged_df[merged_df['month']==month][['subject_id',column_name]]\n    \n        counts_per_subject_month = merged_df_month.groupby(['subject_id', column_name]).size().reset_index(name='counts')\n   \n        matrix_df = counts_per_subject_month.pivot_table(index='subject_id', columns=column_name, values='counts', fill_value=0)\n    \n        matrix_df.to_csv(output_path)",
+    "crumbs": [
+      "Preprocessing",
+      "get_monthly_counts"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-monthly-counts.html#description",
+    "href": "reference/preprocessing/get-monthly-counts.html#description",
+    "title": "get_monthly_counts_relative_to_diagnoses",
+    "section": "",
+    "text": "The get_monthly_counts_relative_to_diagnoses function calculates the monthly frequency of specified events relative to the first diagnosis date of a particular condition. It generates aggregated data files for each month within a specified range.\n\ndef get_monthly_counts_relative_to_diagnoses(diag_filename, input_file, column_name ,output_folder, index_diagnoses_code, month_start, month_end):\n    \n    diagnoses = pd.read_csv(diag_filename, dtype=str)\n    \n    inp_file = pd.read_csv(input_file, dtype=str)\n\n    filter_diagnoses = diagnoses[diagnoses['PheCode']==index_diagnoses_code]\n    \n    disease_first_diagnoses = filter_diagnoses.groupby('subject_id')['date'].min().reset_index() # Check this\n    \n    disease_first_diagnoses.columns = ['subject_id', 'index_date']\n    \n    merged_df = pd.merge(disease_first_diagnoses,inp_file[['subject_id','date',column_name]], on=\"subject_id\",how='left')\n    \n    print(merged_df)\n\n    merged_df['index_date'] = pd.to_datetime(merged_df['index_date'])\n    \n    merged_df['date'] = pd.to_datetime(merged_df['date'])\n    \n    merged_df['days_from_first_diagnosis'] = (merged_df['date'] - merged_df['index_date']).dt.days\n    print(merged_df)\n\n    print(merged_df[['index_date', 'date']].dtypes)\n    print(merged_df.isna().sum())\n\n    \n    \n    merged_df['month']=merged_df['days_from_first_diagnosis'].map(lambda x: get_month(x))\n    \n    print(merged_df)\n    \n    os.makedirs(os.path.join(\"./Aggregated_Data\", index_diagnoses_code, column_name), exist_ok=True)\n    \n    for month in range(month_start, month_end+1, 1):\n        \n        print(f\"Processing Month:{month}\")\n        \n        output_path = os.path.join(\"./Aggregated_Data\", index_diagnoses_code, column_name, f\"month_{month}.csv\")\n\n        print(output_path)\n    \n        merged_df_month = merged_df[merged_df['month']==month][['subject_id',column_name]]\n    \n        counts_per_subject_month = merged_df_month.groupby(['subject_id', column_name]).size().reset_index(name='counts')\n   \n        matrix_df = counts_per_subject_month.pivot_table(index='subject_id', columns=column_name, values='counts', fill_value=0)\n    \n        matrix_df.to_csv(output_path)",
+    "crumbs": [
+      "Preprocessing",
+      "get_monthly_counts"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-monthly-counts.html#input",
+    "href": "reference/preprocessing/get-monthly-counts.html#input",
+    "title": "get_monthly_counts_relative_to_diagnoses",
+    "section": "Input",
+    "text": "Input\n\ndiag_filename (str):\nThe path to the CSV file containing diagnosis data, including subject_id and PheCode columns.\ninput_file (str):\nThe path to the input CSV file containing event data, including subject_id, date, and the column specified by column_name.\ncolumn_name (str):\nThe name of the column representing the event type to be analyzed.\noutput_folder (str):\nThe folder where aggregated data will be saved.\nindex_diagnoses_code (str):\nThe diagnosis code to be used as the index for aggregating event counts.\nmonth_start (int):\nThe starting month relative to the first diagnosis date.\nmonth_end (int):\nThe ending month relative to the first diagnosis date.",
+    "crumbs": [
+      "Preprocessing",
+      "get_monthly_counts"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-monthly-counts.html#output",
+    "href": "reference/preprocessing/get-monthly-counts.html#output",
+    "title": "get_monthly_counts_relative_to_diagnoses",
+    "section": "Output",
+    "text": "Output\nThe function does not return any values but generates: - Monthly Aggregated Files:\nCSV files for each month in the range [month_start, month_end] are saved in the directory: ./Aggregated_Data/{index_diagnoses_code}/{column_name}/month_{month}.csv.\nEach file contains a pivot table where: - Rows represent patients (subject_id). - Columns represent event types (column_name). - Values represent the counts of events.",
+    "crumbs": [
+      "Preprocessing",
+      "get_monthly_counts"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-code-counts-per-patient.html",
+    "href": "reference/preprocessing/get-code-counts-per-patient.html",
+    "title": "get_code_counts_per_patient",
+    "section": "",
+    "text": "The get_code_counts_per_patient function calculates the frequency of parent codes for each patient in a dataset. It provides a count of occurrences for each parent code grouped by patient.\n\ndef get_code_counts_per_patient(filename, parent_code_column):\n    df =  pd.read_csv(filename, dtype=str)\n    code_counts_per_patient= df.groupby(['subject_id', parent_code_column]).size().reset_index(name='count')\n    return code_counts_per_patient",
+    "crumbs": [
+      "Preprocessing",
+      "get_code_counts_per_patient"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-code-counts-per-patient.html#description",
+    "href": "reference/preprocessing/get-code-counts-per-patient.html#description",
+    "title": "get_code_counts_per_patient",
+    "section": "",
+    "text": "The get_code_counts_per_patient function calculates the frequency of parent codes for each patient in a dataset. It provides a count of occurrences for each parent code grouped by patient.\n\ndef get_code_counts_per_patient(filename, parent_code_column):\n    df =  pd.read_csv(filename, dtype=str)\n    code_counts_per_patient= df.groupby(['subject_id', parent_code_column]).size().reset_index(name='count')\n    return code_counts_per_patient",
+    "crumbs": [
+      "Preprocessing",
+      "get_code_counts_per_patient"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-code-counts-per-patient.html#input",
+    "href": "reference/preprocessing/get-code-counts-per-patient.html#input",
+    "title": "get_code_counts_per_patient",
+    "section": "Input",
+    "text": "Input\n\nfilename (str):\nThe path to the input CSV file containing patient data.\nparent_code_column (str):\nThe name of the column representing parent codes in the dataset.",
+    "crumbs": [
+      "Preprocessing",
+      "get_code_counts_per_patient"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-code-counts-per-patient.html#output",
+    "href": "reference/preprocessing/get-code-counts-per-patient.html#output",
+    "title": "get_code_counts_per_patient",
+    "section": "Output",
+    "text": "Output\n\ncode_counts_per_patient (pandas.DataFrame):\nA DataFrame containing the following columns:\n\nsubject_id: The unique identifier for patients.\nparent_code_column: The parent code.\ncount: The count of occurrences of the parent code for each patient.",
+    "crumbs": [
+      "Preprocessing",
+      "get_code_counts_per_patient"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/text-encode.html",
+    "href": "reference/embeddings/text-encode.html",
+    "title": "text_encode",
+    "section": "",
+    "text": "The text_encode.py script provides a framework for encoding text phrases into vector embeddings using pre-trained models from Hugging Face’s transformers library. It is designed for biomedical and general-purpose text encoding, with support for several pre-trained models such as PubMedBERT, SapBERT, and BERT. This script is especially useful for applications in natural language processing (NLP) tasks like similarity computation and classification.\n\n# !/usr/bin/python\n# -*- coding:utf-8 -*-\n# File Name: text_encode.py\n# Author: Keming Lu\n# Mail: keminglu@usc.edu\n# Created Time: 2022-03-22 02:17:37\n\nimport torch\nimport numpy as np\nfrom transformers import AutoModel\nfrom transformers import AutoTokenizer\nfrom tqdm import tqdm\n\nconfig_dict = {\n    \"coder\": \"GanjinZero/coder_eng\",\n    \"coder_all\": \"GanjinZero/coder_all\",\n    \"coder_old\": \"GanjinZero/UMLSBert_ENG\",\n    \"coder_pp\": \"GanjinZero/coder_eng_pp\",\n    \"sapbert\": \"cambridgeltl/SapBERT-from-PubMedBERT-fulltext\",\n    \"pubmedbert\": \"microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext\",\n    \"biobert\": \"monologg/biobert_v1.1_pubmed\",\n    \"bert\": \"bert-base-uncased\"\n}\n\nclass TextEncoder(object):\n    def __init__(\n            self,\n            model_name,\n            device,\n            run_check_max_length = False\n        ):\n        self.device = device\n        self.model_name = model_name\n        self.config = config_dict[self.model_name]\n        self.tokenizer = AutoTokenizer.from_pretrained(self.config)\n        self.model = AutoModel.from_pretrained(self.config).to(self.device)\n        self.run_check_max_length = run_check_max_length\n\n        self.pred_batch_size = 64\n        self.max_length = 32 #128\n\n    def check_max_length(self, inputs):\n        cnt = 0\n        for each in inputs:\n            ids = self.tokenizer.encode_plus(each, add_special_tokens=True, padding='do_not_pad')\n            if len(ids) &gt; self.max_length:\n                cnt += 1\n        all_cnt = len(inputs)\n        print(f\"Current max length is {self.max_length}.\")\n        print(f\"{(1 - cnt / all_cnt)*100}% samples can fit in length {self.max_length}.\")\n\n\n    def get_embed(\n            self,\n            phrase_list,\n            normalize=True,\n            summary_method=\"CLS\"\n        ):\n        if self.run_check_max_length:\n            self.check_max_length(phrase_list)\n        input_ids = []\n        pbar = tqdm(total=len(phrase_list))\n        pbar.set_description(\"Tokenizing phrases:\")\n        for phrase in phrase_list:\n            input_ids.append(self.tokenizer.encode_plus(\n                phrase, max_length=self.max_length, add_special_tokens=True,\n                truncation=True, padding='max_length')['input_ids'])\n            pbar.update(1)\n        self.model.eval()\n\n        count = len(input_ids)\n        now_count = 0\n        pbar = tqdm(total=count)\n        pbar.set_description(\"Encoding:\")\n        with torch.no_grad():\n            while now_count &lt; count:\n                input_gpu_0 = torch.LongTensor(input_ids[now_count:min(\n                    now_count + self.pred_batch_size, count)]).to(self.device)\n                if summary_method == \"CLS\":\n                    embed = self.model(input_gpu_0)[1]\n                if summary_method == \"MEAN\":\n                    embed = torch.mean(self.model(input_gpu_0)[0], dim=1)\n                if normalize:\n                    embed_norm = torch.norm(\n                        embed, p=2, dim=1, keepdim=True).clamp(min=1e-12)\n                    embed = embed / embed_norm\n                embed_np = embed.cpu().detach().numpy()\n                if now_count == 0:\n                    output = embed_np\n                else:\n                    output = np.concatenate((output, embed_np), axis=0)\n                now_count = min(now_count + self.pred_batch_size, count)\n                pbar.update(self.pred_batch_size)\n        return output\n\n\nif __name__ == \"__main__\":\n    phrases = [\"abs\"]\n    device = torch.device(\"cuda:0\")\n    encoder = TextEncoder(\"pubmedbert\", device)\n    print(encoder.get_embed(phrases).shape)",
+    "crumbs": [
+      "Embeddings",
+      "TextEncoder"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/text-encode.html#overview",
+    "href": "reference/embeddings/text-encode.html#overview",
+    "title": "text_encode",
+    "section": "",
+    "text": "The text_encode.py script provides a framework for encoding text phrases into vector embeddings using pre-trained models from Hugging Face’s transformers library. It is designed for biomedical and general-purpose text encoding, with support for several pre-trained models such as PubMedBERT, SapBERT, and BERT. This script is especially useful for applications in natural language processing (NLP) tasks like similarity computation and classification.\n\n# !/usr/bin/python\n# -*- coding:utf-8 -*-\n# File Name: text_encode.py\n# Author: Keming Lu\n# Mail: keminglu@usc.edu\n# Created Time: 2022-03-22 02:17:37\n\nimport torch\nimport numpy as np\nfrom transformers import AutoModel\nfrom transformers import AutoTokenizer\nfrom tqdm import tqdm\n\nconfig_dict = {\n    \"coder\": \"GanjinZero/coder_eng\",\n    \"coder_all\": \"GanjinZero/coder_all\",\n    \"coder_old\": \"GanjinZero/UMLSBert_ENG\",\n    \"coder_pp\": \"GanjinZero/coder_eng_pp\",\n    \"sapbert\": \"cambridgeltl/SapBERT-from-PubMedBERT-fulltext\",\n    \"pubmedbert\": \"microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext\",\n    \"biobert\": \"monologg/biobert_v1.1_pubmed\",\n    \"bert\": \"bert-base-uncased\"\n}\n\nclass TextEncoder(object):\n    def __init__(\n            self,\n            model_name,\n            device,\n            run_check_max_length = False\n        ):\n        self.device = device\n        self.model_name = model_name\n        self.config = config_dict[self.model_name]\n        self.tokenizer = AutoTokenizer.from_pretrained(self.config)\n        self.model = AutoModel.from_pretrained(self.config).to(self.device)\n        self.run_check_max_length = run_check_max_length\n\n        self.pred_batch_size = 64\n        self.max_length = 32 #128\n\n    def check_max_length(self, inputs):\n        cnt = 0\n        for each in inputs:\n            ids = self.tokenizer.encode_plus(each, add_special_tokens=True, padding='do_not_pad')\n            if len(ids) &gt; self.max_length:\n                cnt += 1\n        all_cnt = len(inputs)\n        print(f\"Current max length is {self.max_length}.\")\n        print(f\"{(1 - cnt / all_cnt)*100}% samples can fit in length {self.max_length}.\")\n\n\n    def get_embed(\n            self,\n            phrase_list,\n            normalize=True,\n            summary_method=\"CLS\"\n        ):\n        if self.run_check_max_length:\n            self.check_max_length(phrase_list)\n        input_ids = []\n        pbar = tqdm(total=len(phrase_list))\n        pbar.set_description(\"Tokenizing phrases:\")\n        for phrase in phrase_list:\n            input_ids.append(self.tokenizer.encode_plus(\n                phrase, max_length=self.max_length, add_special_tokens=True,\n                truncation=True, padding='max_length')['input_ids'])\n            pbar.update(1)\n        self.model.eval()\n\n        count = len(input_ids)\n        now_count = 0\n        pbar = tqdm(total=count)\n        pbar.set_description(\"Encoding:\")\n        with torch.no_grad():\n            while now_count &lt; count:\n                input_gpu_0 = torch.LongTensor(input_ids[now_count:min(\n                    now_count + self.pred_batch_size, count)]).to(self.device)\n                if summary_method == \"CLS\":\n                    embed = self.model(input_gpu_0)[1]\n                if summary_method == \"MEAN\":\n                    embed = torch.mean(self.model(input_gpu_0)[0], dim=1)\n                if normalize:\n                    embed_norm = torch.norm(\n                        embed, p=2, dim=1, keepdim=True).clamp(min=1e-12)\n                    embed = embed / embed_norm\n                embed_np = embed.cpu().detach().numpy()\n                if now_count == 0:\n                    output = embed_np\n                else:\n                    output = np.concatenate((output, embed_np), axis=0)\n                now_count = min(now_count + self.pred_batch_size, count)\n                pbar.update(self.pred_batch_size)\n        return output\n\n\nif __name__ == \"__main__\":\n    phrases = [\"abs\"]\n    device = torch.device(\"cuda:0\")\n    encoder = TextEncoder(\"pubmedbert\", device)\n    print(encoder.get_embed(phrases).shape)",
+    "crumbs": [
+      "Embeddings",
+      "TextEncoder"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/text-encode.html#key-components",
+    "href": "reference/embeddings/text-encode.html#key-components",
+    "title": "text_encode",
+    "section": "Key Components",
+    "text": "Key Components\n\nconfig_dict\nA dictionary mapping model names to their respective Hugging Face identifiers. This allows for flexibility in switching between different models.\n\n\nTextEncoder Class\nA class for encoding text into vector embeddings. It includes the following features:\n\nInitialization:\n\nLoads the specified pre-trained model and tokenizer.\nConfigures device settings (e.g., CPU or GPU).\nAllows optional checking of maximum input length for tokenization.\n\nMethods:\n\ncheck_max_length(inputs): Analyzes if input phrases exceed the maximum allowable length for the model.\nget_embed(phrase_list, normalize=True, summary_method=\"CLS\"): Encodes a list of phrases into embeddings using the specified summary method and normalization.\n\nBatch Processing:\n\nProcesses inputs in chunks to optimize memory usage and performance.\n\nOutput:\n\nReturns embeddings as NumPy arrays.",
+    "crumbs": [
+      "Embeddings",
+      "TextEncoder"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html",
+    "href": "reference/embeddings/get-auc-ms.html",
+    "title": "get_AUC_MS",
+    "section": "",
+    "text": "This script provides functions to compute the Area Under the Curve (AUC) for evaluating the similarity between medical code pairs, using either cosine similarity matrices or embedding vectors. It includes functions for generating null (negative) pairs, filtering for codes of interest, merging data sources, and computing AUC scores for grouped subsets of data.\n\nget_AUC_cosine_sub = function(cosine, pairs, nmax = 10000){\n  set.seed(214)\n  posi = pairs %&gt;%\n    mutate(id1 = match(pairs$code1, rownames(cosine)),\n           id2 = match(pairs$code2, rownames(cosine))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  nega = pairs %&gt;%\n    mutate(id1 = match(pairs$nullcode1, rownames(cosine)),\n           id2 = match(pairs$nullcode2, rownames(cosine))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)\n  if(n&lt;5){\n    return(c('auc'=NA,'num'=n))\n  }else{\n    y = rep(c(0,1), each = min(n,nmax))\n    p0 = cosine[cbind(nega$id1, nega$id2)]\n    p1 = cosine[cbind(posi$id1, posi$id2)]\n    p = c(sample(p0,min(n,nmax)),\n          sample(p1,min(n,nmax)))\n    roc0 = roc(y, p, direction = \"&lt;\")\n    return(c('auc'=roc0$auc,'num'=n))\n  }\n}\n\nget_AUC_embed_sub = function(embed, pairs, nmax = 10000){\n  set.seed(214)\n  posi = pairs %&gt;%\n    mutate(id1 = match(pairs$code1, rownames(embed)),\n           id2 = match(pairs$code2, rownames(embed))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  nega = pairs %&gt;%\n    mutate(id1 = match(pairs$nullcode1, rownames(embed)),\n           id2 = match(pairs$nullcode2, rownames(embed))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)\n  if(n&lt;5){\n    return(c('auc'=NA,'num'=n))\n  }else{\n    y = rep(c(0,1), each = min(n,nmax))\n    p0 = apply(embed[nega$id1,]*embed[nega$id2,],1,sum)\n    p1 = apply(embed[posi$id1,]*embed[posi$id2,],1,sum)\n    p = c(sample(p0,min(n,nmax)),\n          sample(p1,min(n,nmax)))\n    roc0 = roc(y, p, direction = \"&lt;\")\n    return(c('auc'=roc0$auc,'num'=n))\n  }\n}\n\n\nget_nullpairs = function(pairs, dict){\n  pairs = pairs %&gt;%\n    filter(code1%in%dict$code) %&gt;%\n    filter(code2%in%dict$code)\n  \n  group = data.frame(g1 = dict$group[match(pairs$code1,dict$code)],\n                     g2 = dict$group[match(pairs$code2,dict$code)])\n  groupdf = data.frame(g1 = apply(group,1,min),\n                       g2 = apply(group,1,max))\n  group = unique(groupdf)\n  pairs$nullcode1 = NA\n  pairs$nullcode2 = NA\n  \n  for(i in 1:nrow(group)){\n    idx = which(groupdf$g1==group[i,1] & groupdf$g2==group[i,2])\n    if(length(idx)==0) next\n    posi = pairs[idx,c('code1','code2')]\n    posi = data.frame(code1 = c(posi$code1,posi$code2),\n                      code2 = c(posi$code2,posi$code1))\n    nega = data.frame(code1 = sample(dict$code[which(dict$group==group[i,1])], nrow(posi)*2,\n                                     replace = TRUE),\n                      code2 = sample(dict$code[which(dict$group==group[i,2])], nrow(posi)*2,\n                                     replace = TRUE))\n    nega = nega %&gt;%\n      filter(code1!=code2)\n    nega = data.frame(code1 = apply(nega,1,min),\n                      code2 = apply(nega,1,max))\n    nega = nega[!duplicated(nega),]\n    nega = setdiff(nega, posi)\n    \n    if(nrow(nega)&lt;length(idx)){\n      cat(\"Warning: Not enough negative samples! g1 =\",\n          group[i,1],\", g2 =\", group[i,2],\"\\n\")\n      pairs$nullcode1[idx[1:nrow(nega)]] = nega$code1\n      pairs$nullcode2[idx[1:nrow(nega)]] = nega$code2\n    }else{\n      pairs$nullcode1[idx] = nega$code1[1:length(idx)]\n      pairs$nullcode2[idx] = nega$code2[1:length(idx)]\n    }\n  }\n  return(pairs)\n}\n\nget_interested_pairs = function(pairs, interested_code){\n  pairs = pairs %&gt;%\n    filter(code1 %in% interested_code | code2 %in% interested_code)\n  return(pairs)\n}\n\nget_merge_pairs = function(pairs, merged, oldremain = FALSE){\n  pairs1 = lapply(1:length(merged), function(i){\n    idx = which(pairs$source%in%merged[[i]])\n    if(length(idx)==0) return(pairs[numeric(),])\n    oldpairs = pairs[idx,]\n    tmp = data.frame(code1 = apply(oldpairs[,c('code1','code2')],1,min),\n                     code2 = apply(oldpairs[,c('code1','code2')],1,max))\n    tmp = tmp[!duplicated(tmp),]\n    tmp$source = names(merged)[i]\n    tmp$type = oldpairs$type[1]\n    tmp$group = oldpairs$group[1]\n    exinfo = setdiff(colnames(pairs), colnames(tmp))\n    if(length(exinfo)==0) return(tmp)\n    tmp = cbind(tmp, oldpairs[1:nrow(tmp),exinfo])\n    return(tmp)\n  })\n  pairs1 = do.call(\"rbind\", pairs1)\n  if(oldremain){\n    pairs2 = pairs\n  }else{\n    pairs2 = pairs[which(!pairs$source%in%unlist(merged)),]\n  }\n  return(rbind(pairs1,pairs2))\n}\n\nget_AUC_embed = function(embed, pairs, WithNull = FALSE,\n                         dict = NULL, normalize = FALSE,\n                         interested_code = NULL,\n                         nmax = 10000, myseed = 214){\n  if(!is.null(interested_code)){\n    pairs = get_interested_pairs(pairs, interested_code)\n  }\n  pairs = pairs %&gt;%\n    filter(code1!=code2)\n  pairs$source[which(pairs$source==\"LOINC Hierachy (rm)\")] = \"LOINC Hierachy (LP1)\"\n  if(normalize){\n    cat(\"## Normalizing embedding ####\",\"\\n\")\n    embed = embed/apply(embed, 1, norm, '2')\n  }\n  if(!is.null(dict)) dict = dict %&gt;% filter(code%in%rownames(embed))\n  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){\n    pairs = pairs %&gt;%\n      filter(code1%in%rownames(embed) & code2%in%rownames(embed)) %&gt;%\n      filter(nullcode1%in%rownames(embed) & nullcode2%in%rownames(embed))\n  }else{\n    cat(\"## Generating Null Pairs ####\",\"\\n\")\n    set.seed(myseed)\n    pairs = get_nullpairs(pairs, dict)\n  }\n  group = pairs %&gt;%\n    dplyr::select(type, group, source) %&gt;%\n    unique()\n  Group = group %&gt;%\n    dplyr::select(type, group) %&gt;%\n    unique() %&gt;%\n    arrange(group, desc(type))\n  \n  cat(\"## Computing AUC ####\",\"\\n\")\n  AUClist = list()\n  for(i in 1:nrow(Group)){\n    subgroup = group %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    subpairs = pairs %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    # cl = makeCluster(detectCores()-1)\n    # clusterExport(cl, c(\"subpairs\",\"subgroup\",\"embed\"), \n    #               envir = environment())\n    AUCpart = lapply(1:nrow(subgroup), function(j){\n      # source(paste(wkd,'Compute_AUC.R',sep=\"\"))\n      subsubpairs = subpairs %&gt;% \n        filter(source == subgroup$source[j])\n      return(get_AUC_embed_sub(embed, subsubpairs, nmax))\n    })\n    # stopCluster(cl)\n    AUCpart = do.call(\"rbind\",AUCpart)\n    rownames(AUCpart) = subgroup$source\n    AUCpart = as.data.frame(AUCpart) %&gt;%\n      arrange(desc(num))\n    AUClist[[i]] = AUCpart\n  }\n  names(AUClist) = paste(Group$group,\"(\",Group$type,\")\",sep=\"\")\n  return(AUClist)\n}\n\nget_AUC_cosine = function(cosine, pairs, WithNull = FALSE,\n                         dict = NULL, \n                         interested_code = NULL,\n                         nmax = 10000, myseed = 214){\n  if(!is.null(interested_code)){\n    pairs = get_interested_pairs(pairs, interested_code)\n  }\n  pairs = pairs %&gt;%\n    filter(code1!=code2)\n  pairs$source[which(pairs$source==\"LOINC Hierachy (rm)\")] = \"LOINC Hierachy (LP1)\"\n  if(!is.null(dict)) dict = dict %&gt;% filter(code%in%rownames(cosine))\n  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){\n    pairs = pairs %&gt;%\n      filter(code1%in%rownames(cosine) & code2%in%rownames(cosine)) %&gt;%\n      filter(nullcode1%in%rownames(cosine) & nullcode2%in%rownames(cosine))\n  }else{\n    cat(\"## Generating Null Pairs ####\",\"\\n\")\n    set.seed(myseed)\n    pairs = get_nullpairs(pairs, dict)\n  }\n  group = pairs %&gt;%\n    dplyr::select(type, group, source) %&gt;%\n    unique()\n  Group = group %&gt;%\n    dplyr::select(type, group) %&gt;%\n    unique() %&gt;%\n    arrange(group, desc(type))\n  \n  cat(\"## Computing AUC ####\",\"\\n\")\n  AUClist = list()\n  for(i in 1:nrow(Group)){\n    subgroup = group %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    subpairs = pairs %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    # cl = makeCluster(detectCores()-1)\n    # clusterExport(cl, c(\"subpairs\",\"subgroup\",\"embed\"), \n    #               envir = environment())\n    AUCpart = lapply(1:nrow(subgroup), function(j){\n      # source(paste(wkd,'Compute_AUC.R',sep=\"\"))\n      subsubpairs = subpairs %&gt;% \n        filter(source == subgroup$source[j])\n      return(get_AUC_cosine_sub(cosine, subsubpairs, nmax))\n    })\n    # stopCluster(cl)\n    AUCpart = do.call(\"rbind\",AUCpart)\n    rownames(AUCpart) = subgroup$source\n    AUCpart = as.data.frame(AUCpart) %&gt;%\n      arrange(desc(num))\n    AUClist[[i]] = AUCpart\n  }\n  names(AUClist) = paste(Group$group,\"(\",Group$type,\")\",sep=\"\")\n  return(AUClist)\n}",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#description",
+    "href": "reference/embeddings/get-auc-ms.html#description",
+    "title": "get_AUC_MS",
+    "section": "",
+    "text": "This script provides functions to compute the Area Under the Curve (AUC) for evaluating the similarity between medical code pairs, using either cosine similarity matrices or embedding vectors. It includes functions for generating null (negative) pairs, filtering for codes of interest, merging data sources, and computing AUC scores for grouped subsets of data.\n\nget_AUC_cosine_sub = function(cosine, pairs, nmax = 10000){\n  set.seed(214)\n  posi = pairs %&gt;%\n    mutate(id1 = match(pairs$code1, rownames(cosine)),\n           id2 = match(pairs$code2, rownames(cosine))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  nega = pairs %&gt;%\n    mutate(id1 = match(pairs$nullcode1, rownames(cosine)),\n           id2 = match(pairs$nullcode2, rownames(cosine))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)\n  if(n&lt;5){\n    return(c('auc'=NA,'num'=n))\n  }else{\n    y = rep(c(0,1), each = min(n,nmax))\n    p0 = cosine[cbind(nega$id1, nega$id2)]\n    p1 = cosine[cbind(posi$id1, posi$id2)]\n    p = c(sample(p0,min(n,nmax)),\n          sample(p1,min(n,nmax)))\n    roc0 = roc(y, p, direction = \"&lt;\")\n    return(c('auc'=roc0$auc,'num'=n))\n  }\n}\n\nget_AUC_embed_sub = function(embed, pairs, nmax = 10000){\n  set.seed(214)\n  posi = pairs %&gt;%\n    mutate(id1 = match(pairs$code1, rownames(embed)),\n           id2 = match(pairs$code2, rownames(embed))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  nega = pairs %&gt;%\n    mutate(id1 = match(pairs$nullcode1, rownames(embed)),\n           id2 = match(pairs$nullcode2, rownames(embed))) %&gt;%\n    dplyr::select(id1, id2) %&gt;%\n    na.omit()\n  n1 = nrow(posi); n0 = nrow(nega); n = min(n0,n1)\n  if(n&lt;5){\n    return(c('auc'=NA,'num'=n))\n  }else{\n    y = rep(c(0,1), each = min(n,nmax))\n    p0 = apply(embed[nega$id1,]*embed[nega$id2,],1,sum)\n    p1 = apply(embed[posi$id1,]*embed[posi$id2,],1,sum)\n    p = c(sample(p0,min(n,nmax)),\n          sample(p1,min(n,nmax)))\n    roc0 = roc(y, p, direction = \"&lt;\")\n    return(c('auc'=roc0$auc,'num'=n))\n  }\n}\n\n\nget_nullpairs = function(pairs, dict){\n  pairs = pairs %&gt;%\n    filter(code1%in%dict$code) %&gt;%\n    filter(code2%in%dict$code)\n  \n  group = data.frame(g1 = dict$group[match(pairs$code1,dict$code)],\n                     g2 = dict$group[match(pairs$code2,dict$code)])\n  groupdf = data.frame(g1 = apply(group,1,min),\n                       g2 = apply(group,1,max))\n  group = unique(groupdf)\n  pairs$nullcode1 = NA\n  pairs$nullcode2 = NA\n  \n  for(i in 1:nrow(group)){\n    idx = which(groupdf$g1==group[i,1] & groupdf$g2==group[i,2])\n    if(length(idx)==0) next\n    posi = pairs[idx,c('code1','code2')]\n    posi = data.frame(code1 = c(posi$code1,posi$code2),\n                      code2 = c(posi$code2,posi$code1))\n    nega = data.frame(code1 = sample(dict$code[which(dict$group==group[i,1])], nrow(posi)*2,\n                                     replace = TRUE),\n                      code2 = sample(dict$code[which(dict$group==group[i,2])], nrow(posi)*2,\n                                     replace = TRUE))\n    nega = nega %&gt;%\n      filter(code1!=code2)\n    nega = data.frame(code1 = apply(nega,1,min),\n                      code2 = apply(nega,1,max))\n    nega = nega[!duplicated(nega),]\n    nega = setdiff(nega, posi)\n    \n    if(nrow(nega)&lt;length(idx)){\n      cat(\"Warning: Not enough negative samples! g1 =\",\n          group[i,1],\", g2 =\", group[i,2],\"\\n\")\n      pairs$nullcode1[idx[1:nrow(nega)]] = nega$code1\n      pairs$nullcode2[idx[1:nrow(nega)]] = nega$code2\n    }else{\n      pairs$nullcode1[idx] = nega$code1[1:length(idx)]\n      pairs$nullcode2[idx] = nega$code2[1:length(idx)]\n    }\n  }\n  return(pairs)\n}\n\nget_interested_pairs = function(pairs, interested_code){\n  pairs = pairs %&gt;%\n    filter(code1 %in% interested_code | code2 %in% interested_code)\n  return(pairs)\n}\n\nget_merge_pairs = function(pairs, merged, oldremain = FALSE){\n  pairs1 = lapply(1:length(merged), function(i){\n    idx = which(pairs$source%in%merged[[i]])\n    if(length(idx)==0) return(pairs[numeric(),])\n    oldpairs = pairs[idx,]\n    tmp = data.frame(code1 = apply(oldpairs[,c('code1','code2')],1,min),\n                     code2 = apply(oldpairs[,c('code1','code2')],1,max))\n    tmp = tmp[!duplicated(tmp),]\n    tmp$source = names(merged)[i]\n    tmp$type = oldpairs$type[1]\n    tmp$group = oldpairs$group[1]\n    exinfo = setdiff(colnames(pairs), colnames(tmp))\n    if(length(exinfo)==0) return(tmp)\n    tmp = cbind(tmp, oldpairs[1:nrow(tmp),exinfo])\n    return(tmp)\n  })\n  pairs1 = do.call(\"rbind\", pairs1)\n  if(oldremain){\n    pairs2 = pairs\n  }else{\n    pairs2 = pairs[which(!pairs$source%in%unlist(merged)),]\n  }\n  return(rbind(pairs1,pairs2))\n}\n\nget_AUC_embed = function(embed, pairs, WithNull = FALSE,\n                         dict = NULL, normalize = FALSE,\n                         interested_code = NULL,\n                         nmax = 10000, myseed = 214){\n  if(!is.null(interested_code)){\n    pairs = get_interested_pairs(pairs, interested_code)\n  }\n  pairs = pairs %&gt;%\n    filter(code1!=code2)\n  pairs$source[which(pairs$source==\"LOINC Hierachy (rm)\")] = \"LOINC Hierachy (LP1)\"\n  if(normalize){\n    cat(\"## Normalizing embedding ####\",\"\\n\")\n    embed = embed/apply(embed, 1, norm, '2')\n  }\n  if(!is.null(dict)) dict = dict %&gt;% filter(code%in%rownames(embed))\n  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){\n    pairs = pairs %&gt;%\n      filter(code1%in%rownames(embed) & code2%in%rownames(embed)) %&gt;%\n      filter(nullcode1%in%rownames(embed) & nullcode2%in%rownames(embed))\n  }else{\n    cat(\"## Generating Null Pairs ####\",\"\\n\")\n    set.seed(myseed)\n    pairs = get_nullpairs(pairs, dict)\n  }\n  group = pairs %&gt;%\n    dplyr::select(type, group, source) %&gt;%\n    unique()\n  Group = group %&gt;%\n    dplyr::select(type, group) %&gt;%\n    unique() %&gt;%\n    arrange(group, desc(type))\n  \n  cat(\"## Computing AUC ####\",\"\\n\")\n  AUClist = list()\n  for(i in 1:nrow(Group)){\n    subgroup = group %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    subpairs = pairs %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    # cl = makeCluster(detectCores()-1)\n    # clusterExport(cl, c(\"subpairs\",\"subgroup\",\"embed\"), \n    #               envir = environment())\n    AUCpart = lapply(1:nrow(subgroup), function(j){\n      # source(paste(wkd,'Compute_AUC.R',sep=\"\"))\n      subsubpairs = subpairs %&gt;% \n        filter(source == subgroup$source[j])\n      return(get_AUC_embed_sub(embed, subsubpairs, nmax))\n    })\n    # stopCluster(cl)\n    AUCpart = do.call(\"rbind\",AUCpart)\n    rownames(AUCpart) = subgroup$source\n    AUCpart = as.data.frame(AUCpart) %&gt;%\n      arrange(desc(num))\n    AUClist[[i]] = AUCpart\n  }\n  names(AUClist) = paste(Group$group,\"(\",Group$type,\")\",sep=\"\")\n  return(AUClist)\n}\n\nget_AUC_cosine = function(cosine, pairs, WithNull = FALSE,\n                         dict = NULL, \n                         interested_code = NULL,\n                         nmax = 10000, myseed = 214){\n  if(!is.null(interested_code)){\n    pairs = get_interested_pairs(pairs, interested_code)\n  }\n  pairs = pairs %&gt;%\n    filter(code1!=code2)\n  pairs$source[which(pairs$source==\"LOINC Hierachy (rm)\")] = \"LOINC Hierachy (LP1)\"\n  if(!is.null(dict)) dict = dict %&gt;% filter(code%in%rownames(cosine))\n  if(WithNull & 'nullcode1' %in% colnames(pairs) & 'nullcode2' %in% colnames(pairs)){\n    pairs = pairs %&gt;%\n      filter(code1%in%rownames(cosine) & code2%in%rownames(cosine)) %&gt;%\n      filter(nullcode1%in%rownames(cosine) & nullcode2%in%rownames(cosine))\n  }else{\n    cat(\"## Generating Null Pairs ####\",\"\\n\")\n    set.seed(myseed)\n    pairs = get_nullpairs(pairs, dict)\n  }\n  group = pairs %&gt;%\n    dplyr::select(type, group, source) %&gt;%\n    unique()\n  Group = group %&gt;%\n    dplyr::select(type, group) %&gt;%\n    unique() %&gt;%\n    arrange(group, desc(type))\n  \n  cat(\"## Computing AUC ####\",\"\\n\")\n  AUClist = list()\n  for(i in 1:nrow(Group)){\n    subgroup = group %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    subpairs = pairs %&gt;%\n      filter(type == Group$type[i] & group == Group$group[i])\n    # cl = makeCluster(detectCores()-1)\n    # clusterExport(cl, c(\"subpairs\",\"subgroup\",\"embed\"), \n    #               envir = environment())\n    AUCpart = lapply(1:nrow(subgroup), function(j){\n      # source(paste(wkd,'Compute_AUC.R',sep=\"\"))\n      subsubpairs = subpairs %&gt;% \n        filter(source == subgroup$source[j])\n      return(get_AUC_cosine_sub(cosine, subsubpairs, nmax))\n    })\n    # stopCluster(cl)\n    AUCpart = do.call(\"rbind\",AUCpart)\n    rownames(AUCpart) = subgroup$source\n    AUCpart = as.data.frame(AUCpart) %&gt;%\n      arrange(desc(num))\n    AUClist[[i]] = AUCpart\n  }\n  names(AUClist) = paste(Group$group,\"(\",Group$type,\")\",sep=\"\")\n  return(AUClist)\n}",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_auc_cosine_sub",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_auc_cosine_sub",
+    "title": "get_AUC_MS",
+    "section": "Function: get_AUC_cosine_sub",
+    "text": "Function: get_AUC_cosine_sub\nDescription:\nComputes the AUC for a subset of code pairs using a cosine similarity matrix.\nInputs: - cosine: A square matrix of cosine similarity values. - pairs: A data frame containing code1, code2, nullcode1, and nullcode2. - nmax: (Optional) Maximum number of samples for AUC computation. Default is 10000.\nOutput:\nNamed numeric vector with: - 'auc': AUC score. - 'num': Number of evaluated pairs.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_auc_embed_sub",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_auc_embed_sub",
+    "title": "get_AUC_MS",
+    "section": "Function: get_AUC_embed_sub",
+    "text": "Function: get_AUC_embed_sub\nDescription:\nComputes the AUC using the dot product of embedding vectors for each code pair.\nInputs: - embed: A matrix where rows are embeddings of codes. - pairs: A data frame with code and nullcode pairs. - nmax: (Optional) Max number of samples. Default is 10000.\nOutput:\nNamed numeric vector with: - 'auc': AUC score. - 'num': Number of evaluated pairs.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_nullpairs",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_nullpairs",
+    "title": "get_AUC_MS",
+    "section": "Function: get_nullpairs",
+    "text": "Function: get_nullpairs\nDescription:\nGenerates negative (null) code pairs within matched code groups.\nInputs: - pairs: Data frame with positive code pairs. - dict: A data frame with code-to-group mappings.\nOutput:\nModified pairs data frame with new columns: nullcode1 and nullcode2.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_interested_pairs",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_interested_pairs",
+    "title": "get_AUC_MS",
+    "section": "Function: get_interested_pairs",
+    "text": "Function: get_interested_pairs\nDescription:\nFilters pairs where either code matches a set of “interested” codes.\nInputs: - pairs: Data frame of code pairs. - interested_code: A character vector of target codes.\nOutput:\nFiltered subset of the input pairs.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_merge_pairs",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_merge_pairs",
+    "title": "get_AUC_MS",
+    "section": "Function: get_merge_pairs",
+    "text": "Function: get_merge_pairs\nDescription:\nMerges selected sources in pairs based on merged groupings.\nInputs: - pairs: Data frame with code pairs and metadata. - merged: A named list specifying which source values to merge. - oldremain: If TRUE, retains original pairs not in merged. Default is FALSE.\nOutput:\nData frame of merged and (optionally) unmerged code pairs.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_auc_embed",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_auc_embed",
+    "title": "get_AUC_MS",
+    "section": "Function: get_AUC_embed",
+    "text": "Function: get_AUC_embed\nDescription:\nComputes AUC scores for grouped code pairs using embeddings.\nInputs: - embed: Matrix of embeddings. - pairs: Data frame of code pairs. - WithNull: Whether to use existing null pairs. Default FALSE. - dict: Code-to-group data frame. Used if generating null pairs. - normalize: Whether to normalize embeddings. Default FALSE. - interested_code: Optional list of codes to filter the pairs. - nmax: Max number of sample pairs. Default 10000. - myseed: Seed for reproducibility. Default 214.\nOutput:\nNamed list of data frames, each containing AUC results by source.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/get-auc-ms.html#function-get_auc_cosine",
+    "href": "reference/embeddings/get-auc-ms.html#function-get_auc_cosine",
+    "title": "get_AUC_MS",
+    "section": "Function: get_AUC_cosine",
+    "text": "Function: get_AUC_cosine\nDescription:\nComputes AUC scores for grouped code pairs using a cosine similarity matrix.\nInputs: - cosine: Cosine similarity matrix. - pairs: Data frame of code pairs. - WithNull: Use existing null pairs. Default FALSE. - dict: Code-to-group data frame. - interested_code: Optional filtering of code pairs. - nmax: Max samples per subgroup. Default 10000. - myseed: Random seed. Default 214.\nOutput:\nNamed list of data frames with AUC results per code group and source.",
+    "crumbs": [
+      "Embeddings",
+      "get_AUC_MS"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi.html",
+    "href": "reference/embeddings/bonmi.html",
+    "title": "BONMI function",
+    "section": "",
+    "text": "The BONMI function is the main function for learning a unified low-dimensional representation from a list of PPMI matrices. It performs dimensionality reduction and aligns the matrices to ensure consistency across datasets, optionally using randomized SVD for efficiency.\n\nBONMI&lt;-function(W,r,weights=NULL,rsvd.use=FALSE){\n  #Input: \n  ##W: a list of PPMI matrices, with rownames and colnames being the features\n  ##r: rank\n  ##weights: the weight vector for the PPMI matrices. If weights = NULL, then it will be estimated from data. \n  ##rsvd.use: If rsvd.use=TRUE, we will use the 'rsvd' function to calculate the svd, which is much faster than the 'svd' function  when r is small. \n  \n  m = length(W)\n  codes = NULL\n  for(s in 1:m){\n    codes = union(codes,rownames(W[[s]]))\n  }\n  codes = sort(codes)\n  \n  if(is.null(weights)){\n    weights = sapply(1:m, function(s){\n     if(rsvd.use){\n        set.seed(1)\n        fit = rsvd(W[[s]],r+1)\n    }else{\n      fit = svd(W[[s]],r+1,r+1)\n    }\n    w = fit$d[r+1]/sqrt(nrow(W[[s]]))\n    return(w)\n    })\n  }\n  \n  Wc = matrix(0,nrow=length(codes),ncol=length(codes))\n  C = matrix(0,nrow=length(codes),ncol=length(codes))\n  Weis = matrix(0,nrow=length(codes),ncol=length(codes))\n  \n  rownames(Wc) = colnames(Wc) = codes\n  rownames(C) = colnames(C) = codes\n  rownames(Weis) = colnames(Weis) = codes\n  \n  for(s in 1:m){\n    id = match(rownames(W[[s]]),codes)\n    Wc[id,id] = Wc[id,id] + weights[s]*W[[s]]\n    C[id,id] = C[id,id]+1\n    Weis[id,id] = Weis[id,id]+weights[s] \n  }\n  Wc[C&gt;0] = Wc[C&gt;0]/Weis[C&gt;0]\n  Wo = Wc; Wo[C==0] = NA\n  \n  W.new = list()\n  for(s in 1:m){\n    Is = match(rownames(W[[s]]),rownames(Wc))\n    W.new[[s]] = Wc[Is,Is]\n  }\n  \n  fits = lapply(1:m, function(s){\n    if(rsvd.use){\n      set.seed(1)\n      return(rsvd(W.new[[s]],r))\n  }else{\n    return(svd(W.new[[s]],r,r))\n    }\n  })\n  \n  Xs = lapply(1:m, function(s){ \n    U = embedding(fits[[s]],r)\n    rownames(U) = rownames(W[[s]])\n    U\n  })\n  \n  Wm = matrix(0,nrow=nrow(Wc),ncol=ncol(Wc))\n  M = matrix(0,nrow=nrow(Wc),ncol=ncol(Wc))\n  rownames(Wm) = colnames(Wm) = rownames(Wc) \n  rownames(M) = colnames(M) = rownames(Wc) \n  \n  for(s in 1:(m-1)){\n    for(k in (s+1):m){\n      name12 = intersect(rownames(W[[s]]),rownames(W[[k]]))\n      ids = match(name12,rownames(W[[s]]))\n      idk = match(name12,rownames(W[[k]]))\n      Osk = Procrustes(Xs[[s]][ids,],Xs[[k]][idk,])\n      Wsk = Xs[[s]][-ids,]%*%t(Osk)%*%t(Xs[[k]][-idk,])\n      id1 = match(rownames(W[[s]])[-ids],rownames(Wm))\n      id2 = match(rownames(W[[k]])[-idk],rownames(Wm))\n      Wm[id1,id2] = Wm[id1,id2]+Wsk; Wm[id2,id1] =  Wm[id2,id1]+t(Wsk)\n      M[id1,id2] = M[id1,id2] + 1; M[id2,id1] = M[id2,id1] + 1\n    }\n  }\n  Wm[M&gt;0] = Wm[M&gt;0]/M[M&gt;0]\n  Wm[C&gt;0] = Wc[C&gt;0]\n\n \n  if(rsvd.use){\n    set.seed(1)\n    fit.W = rsvd(Wm,r)\n  }else{\n  fit.W = svd(Wm,r,r)\n  }\n  \n  X = embedding(fit.W,r)\n  rownames(X) = rownames(Wm)\n  return(X)\n}",
+    "crumbs": [
+      "Embeddings",
+      "BONMI"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi.html#description",
+    "href": "reference/embeddings/bonmi.html#description",
+    "title": "BONMI function",
+    "section": "",
+    "text": "The BONMI function is the main function for learning a unified low-dimensional representation from a list of PPMI matrices. It performs dimensionality reduction and aligns the matrices to ensure consistency across datasets, optionally using randomized SVD for efficiency.\n\nBONMI&lt;-function(W,r,weights=NULL,rsvd.use=FALSE){\n  #Input: \n  ##W: a list of PPMI matrices, with rownames and colnames being the features\n  ##r: rank\n  ##weights: the weight vector for the PPMI matrices. If weights = NULL, then it will be estimated from data. \n  ##rsvd.use: If rsvd.use=TRUE, we will use the 'rsvd' function to calculate the svd, which is much faster than the 'svd' function  when r is small. \n  \n  m = length(W)\n  codes = NULL\n  for(s in 1:m){\n    codes = union(codes,rownames(W[[s]]))\n  }\n  codes = sort(codes)\n  \n  if(is.null(weights)){\n    weights = sapply(1:m, function(s){\n     if(rsvd.use){\n        set.seed(1)\n        fit = rsvd(W[[s]],r+1)\n    }else{\n      fit = svd(W[[s]],r+1,r+1)\n    }\n    w = fit$d[r+1]/sqrt(nrow(W[[s]]))\n    return(w)\n    })\n  }\n  \n  Wc = matrix(0,nrow=length(codes),ncol=length(codes))\n  C = matrix(0,nrow=length(codes),ncol=length(codes))\n  Weis = matrix(0,nrow=length(codes),ncol=length(codes))\n  \n  rownames(Wc) = colnames(Wc) = codes\n  rownames(C) = colnames(C) = codes\n  rownames(Weis) = colnames(Weis) = codes\n  \n  for(s in 1:m){\n    id = match(rownames(W[[s]]),codes)\n    Wc[id,id] = Wc[id,id] + weights[s]*W[[s]]\n    C[id,id] = C[id,id]+1\n    Weis[id,id] = Weis[id,id]+weights[s] \n  }\n  Wc[C&gt;0] = Wc[C&gt;0]/Weis[C&gt;0]\n  Wo = Wc; Wo[C==0] = NA\n  \n  W.new = list()\n  for(s in 1:m){\n    Is = match(rownames(W[[s]]),rownames(Wc))\n    W.new[[s]] = Wc[Is,Is]\n  }\n  \n  fits = lapply(1:m, function(s){\n    if(rsvd.use){\n      set.seed(1)\n      return(rsvd(W.new[[s]],r))\n  }else{\n    return(svd(W.new[[s]],r,r))\n    }\n  })\n  \n  Xs = lapply(1:m, function(s){ \n    U = embedding(fits[[s]],r)\n    rownames(U) = rownames(W[[s]])\n    U\n  })\n  \n  Wm = matrix(0,nrow=nrow(Wc),ncol=ncol(Wc))\n  M = matrix(0,nrow=nrow(Wc),ncol=ncol(Wc))\n  rownames(Wm) = colnames(Wm) = rownames(Wc) \n  rownames(M) = colnames(M) = rownames(Wc) \n  \n  for(s in 1:(m-1)){\n    for(k in (s+1):m){\n      name12 = intersect(rownames(W[[s]]),rownames(W[[k]]))\n      ids = match(name12,rownames(W[[s]]))\n      idk = match(name12,rownames(W[[k]]))\n      Osk = Procrustes(Xs[[s]][ids,],Xs[[k]][idk,])\n      Wsk = Xs[[s]][-ids,]%*%t(Osk)%*%t(Xs[[k]][-idk,])\n      id1 = match(rownames(W[[s]])[-ids],rownames(Wm))\n      id2 = match(rownames(W[[k]])[-idk],rownames(Wm))\n      Wm[id1,id2] = Wm[id1,id2]+Wsk; Wm[id2,id1] =  Wm[id2,id1]+t(Wsk)\n      M[id1,id2] = M[id1,id2] + 1; M[id2,id1] = M[id2,id1] + 1\n    }\n  }\n  Wm[M&gt;0] = Wm[M&gt;0]/M[M&gt;0]\n  Wm[C&gt;0] = Wc[C&gt;0]\n\n \n  if(rsvd.use){\n    set.seed(1)\n    fit.W = rsvd(Wm,r)\n  }else{\n  fit.W = svd(Wm,r,r)\n  }\n  \n  X = embedding(fit.W,r)\n  rownames(X) = rownames(Wm)\n  return(X)\n}",
+    "crumbs": [
+      "Embeddings",
+      "BONMI"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi.html#arguments",
+    "href": "reference/embeddings/bonmi.html#arguments",
+    "title": "BONMI function",
+    "section": "Arguments",
+    "text": "Arguments\n\nW: A list of PPMI matrices, where each matrix has row and column names corresponding to features.\nr: The target rank for dimensionality reduction (number of components to retain).\nweights (optional): A vector of weights for each matrix in W, used to influence their contributions during the embedding process.\nrsvd.use (optional, default FALSE): A boolean flag indicating whether to use randomized SVD (TRUE) or standard SVD (FALSE).",
+    "crumbs": [
+      "Embeddings",
+      "BONMI"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi.html#output",
+    "href": "reference/embeddings/bonmi.html#output",
+    "title": "BONMI function",
+    "section": "Output",
+    "text": "Output\n\nReturns a list containing the learned low-dimensional representations of the input matrices and the aligned transformation matrices for consistency across datasets.",
+    "crumbs": [
+      "Embeddings",
+      "BONMI"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi.html#see-also",
+    "href": "reference/embeddings/bonmi.html#see-also",
+    "title": "BONMI function",
+    "section": "See also",
+    "text": "See also\nSee BONMI Package for code example.",
+    "crumbs": [
+      "Embeddings",
+      "BONMI"
+    ]
+  },
+  {
+    "objectID": "setup/workspace.html",
+    "href": "setup/workspace.html",
+    "title": "Workspace Setup",
+    "section": "",
+    "text": "Create a workspace to download and process MIMIC-IV data\nDownload all the tutorial notebooks into the workspace\nCreate a virtual environment and install the required Python libraries\nDownload the MIMIC data into the workspace",
+    "crumbs": [
+      "Workspace Setup"
+    ]
+  },
+  {
+    "objectID": "setup/workspace.html#setting-up-your-compute-environment",
+    "href": "setup/workspace.html#setting-up-your-compute-environment",
+    "title": "Workspace Setup",
+    "section": "",
+    "text": "Create a workspace to download and process MIMIC-IV data\nDownload all the tutorial notebooks into the workspace\nCreate a virtual environment and install the required Python libraries\nDownload the MIMIC data into the workspace",
+    "crumbs": [
+      "Workspace Setup"
+    ]
+  },
+  {
+    "objectID": "setup/workspace.html#directory-structure",
+    "href": "setup/workspace.html#directory-structure",
+    "title": "Workspace Setup",
+    "section": "Directory Structure",
+    "text": "Directory Structure\nEHR_TUTORIAL_WORKSPACE/\n├── processed_data/                # Outputs after cleaning & standardization\n│\n├── raw_data/                      # Original downloaded MIMIC data\n│   ├── note_data/\n│   │   └── physionet.org/\n│   │       └── files/\n│   │           └── mimic-iv-note/\n│   │               └── 2.2/\n│   │                   └── note/\n│   │                       └── *.csv.gz\n│   │\n│   └── structured_data/\n│       └── physionet.org/\n│           └── files/\n│               └── mimiciv/\n│                   └── 3.1/\n│                       ├── hosp/\n│                       │   └── *.csv.gz\n│                       └── icu/\n│                           └── *.csv.gz\n│\n└── scripts/                       # Tutorial ipynb notebooks & mapping files\n    └── EHR-Processing-Tutorial-main/\n        ├── meta_files/\n        └── Rollup_Mappings/",
+    "crumbs": [
+      "Workspace Setup"
+    ]
+  },
+  {
+    "objectID": "setup/workspace.html#setup-script",
+    "href": "setup/workspace.html#setup-script",
+    "title": "Workspace Setup",
+    "section": "Setup Script",
+    "text": "Setup Script\n\n\n\n\n\n\nSet Your Workspace Path\n\n\n\nBefore running the script below, update the LOCATION variable to the directory where you want to create the workspace.\n\n\nThe following script can be run on Unix-based systems to set up the workspace:\n#!/bin/bash\n\n# Set the location variable to the path where you want to create the MIMIC workspace\nLOCATION=\"/path/to/your/workspace\"\n\n# If you would like to download and work in your home directory, you can update above to LOCATION=\"$HOME\"\n\n# Check if the workspace folder already exists\nif [ -d \"${LOCATION}/EHR_TUTORIAL_WORKSPACE\" ]; then\n  echo \"EHR_TUTORIAL_WORKSPACE folder already exists here ${LOCATION}/EHR_TUTORIAL_WORKSPACE\"\n  exit 0\nfi\n\n# Create the workspace directory\nmkdir \"${LOCATION}/EHR_TUTORIAL_WORKSPACE\"\necho \"Workspace has been created here ${LOCATION}/EHR_TUTORIAL_WORKSPACE\"\n\n# Create the workspace subdirectories\necho \"Creating raw_data, processed_data, and scripts subdirectories\"\nmkdir -p \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/structured_data\" \\\n         \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/note_data\" \\\n         \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/processed_data\" \\\n         \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts\"\necho \"Workspace has been set up here ${LOCATION}/EHR_TUTORIAL_WORKSPACE\"\n\n# Download and extract MIMIC Data Prep scripts from GitHub\necho \"Downloading and extracting MIMIC Data Prep scripts from GitHub...\"\nwget https://github.com/apvidul/EHR-Processing-Tutorial/archive/refs/heads/main.zip -O mimic-data-prep.zip\nunzip -q mimic-data-prep.zip -d \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts\"\nmv \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/EHR-Processing-Tutorial-main/\"* \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/\"\n\n# Cleanup unnecessary files and folders\nrm -rf mimic-data-prep.zip \"${LOCATION}/EHR_TUTORIAL_WORKSPACE/scripts/EHR-Processing-Tutorial-main\"\n\necho \"Creating the Conda environment ehr_tutorial\"\nconda create --yes --name ehr_tutorial pandas wordcloud jupyter tqdm matplotlib\n\n# Downloading the structured MIMIC data into raw_data/structured_data\nwget -r -N -c -np --user ${PHYSIONET_USERNAME} --password ${PHYSIONET_PASSWORD} \\\n  https://physionet.org/files/mimiciv/3.1/ \\\n  -P ${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/structured_data\n\n# Downloading the note data into raw_data/note_data\nwget -r -N -c -np --user ${PHYSIONET_USERNAME} --password ${PHYSIONET_PASSWORD} \\\n  https://physionet.org/files/mimic-iv-note/2.2/ \\\n  -P ${LOCATION}/EHR_TUTORIAL_WORKSPACE/raw_data/note_data\n\n\n\n\n\n\nEnvironment Variables\n\n\n\nSet PHYSIONET_USERNAME and PHYSIONET_PASSWORD in your shell before running the download commands:\nexport PHYSIONET_USERNAME=\"your_username\"\nexport PHYSIONET_PASSWORD=\"your_password\"",
+    "crumbs": [
+      "Workspace Setup"
+    ]
+  },
+  {
+    "objectID": "setup/workspace.html#unzipping-the-data",
+    "href": "setup/workspace.html#unzipping-the-data",
+    "title": "Workspace Setup",
+    "section": "Unzipping the Data",
+    "text": "Unzipping the Data\nOnce MIMIC is downloaded, the data is in .csv.gz format. Set the WORKSPACE_DIR variable and run:\nimport os\n\n# Set your workspace location here\nWORKSPACE_DIR = \"/path/to/your/EHR_TUTORIAL_WORKSPACE\"\n\n# Unzip structured data\nhosp_gz_files_path = os.path.join(WORKSPACE_DIR, \"raw_data\", \"structured_data\",\n    \"physionet.org\", \"files\", \"mimiciv\", \"3.1\", \"hosp\")\n!gunzip {hosp_gz_files_path}/*.gz\n\n# Unzip note data\nnote_gz_files_path = os.path.join(WORKSPACE_DIR, \"raw_data\", \"note_data\",\n    \"physionet.org\", \"files\", \"mimic-iv-note\", \"2.2\", \"note\")\n!gunzip {note_gz_files_path}/*.gz\n\n\n\n\n\n\nVerify Your Setup\n\n\n\nAfter setup, your raw_data/structured_data/.../hosp/ directory should contain CSV files including: patients.csv, admissions.csv, diagnoses_icd.csv, prescriptions.csv, labevents.csv, hcpcsevents.csv, procedures_icd.csv, and their corresponding data dictionary files (d_icd_diagnoses.csv, etc.).",
+    "crumbs": [
+      "Workspace Setup"
+    ]
+  },
+  {
+    "objectID": "setup/index.html",
+    "href": "setup/index.html",
+    "title": "Overview & Prerequisites",
+    "section": "",
+    "text": "This tutorial walks through the PEHRT framework for processing Electronic Health Record (EHR) data for translational research. It covers three modules:\n\nModule 1: Data Preprocessing — Clean, normalize, and aggregate EHR data into analysis-ready patient-level feature matrices\nModule 2: Representation Learning — Generate embeddings from EHR codes using SVD-PMI and pre-trained language models\nModule 3: Automated Harmonization — Combine data from multiple institutions using the BONMI algorithm",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "setup/index.html#what-you-will-learn",
+    "href": "setup/index.html#what-you-will-learn",
+    "title": "Overview & Prerequisites",
+    "section": "",
+    "text": "This tutorial walks through the PEHRT framework for processing Electronic Health Record (EHR) data for translational research. It covers three modules:\n\nModule 1: Data Preprocessing — Clean, normalize, and aggregate EHR data into analysis-ready patient-level feature matrices\nModule 2: Representation Learning — Generate embeddings from EHR codes using SVD-PMI and pre-trained language models\nModule 3: Automated Harmonization — Combine data from multiple institutions using the BONMI algorithm",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "setup/index.html#prerequisites",
+    "href": "setup/index.html#prerequisites",
+    "title": "Overview & Prerequisites",
+    "section": "Prerequisites",
+    "text": "Prerequisites\n\nPython basics and familiarity with the Pandas library\nAccess to MIMIC-IV 3.1 — see MIMIC-IV Access\nA UMLS account (needed for NLP processing in Module 1, Step 3)",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "setup/index.html#tutorial-structure",
+    "href": "setup/index.html#tutorial-structure",
+    "title": "Overview & Prerequisites",
+    "section": "Tutorial Structure",
+    "text": "Tutorial Structure\nModule 1 is divided into four parts:\n\nPart 1: Data Cleaning\nPart 2: Medical Code Rollup\nPart 3: Natural Language Processing\nPart 4: Cohort Creation\n\nEach part walks through key steps using MIMIC-IV datasets as examples, then defines reusable functions that can be applied to other EHR datasets.\n\n\n\n\n\n\nQuick Start\n\n\n\nIf you already have MIMIC-IV access and a workspace set up, skip to Module 1.",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "setup/index.html#computing-and-storage-requirements",
+    "href": "setup/index.html#computing-and-storage-requirements",
+    "title": "Overview & Prerequisites",
+    "section": "Computing and Storage Requirements",
+    "text": "Computing and Storage Requirements\nThe required resources depend on dataset scale:\n\n\n\n\n\n\n\n\n\n\n\nDataset Scale\nNode Setup\nCPU Cores\nRAM\nStorage\nNotes\n\n\n\n\nModerate (~100K patients)\nSingle node\n8–16\n32–64 GB\n≥3x raw data\nR/Python Pandas is sufficient\n\n\nLarge (1–3M patients)\nSingle powerful node\n32–64\n256–512 GB\n3–5x raw data\nProcess in patient batches; consider Polars or Dask\n\n\nLarge (1–3M patients)\nDistributed cluster (5–10 nodes)\n8–32 each\n64–128 GB each\n3–5x raw data\nPrefer Parquet. Use Spark, Dask, Polars\n\n\nVery large (&gt;5M patients)\nSingle HPC node\n~128\n~1 TB\n5x raw data\nUse Spark or Dask on high-memory server\n\n\nVery large (&gt;5M patients)\nDistributed HPC cluster (10–20 nodes)\n~32-64 each\n~128-256 GB each\n5x raw data\nUse Parquet + scalable engine (Spark, Dask)",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "setup/index.html#software-recommendations",
+    "href": "setup/index.html#software-recommendations",
+    "title": "Overview & Prerequisites",
+    "section": "Software Recommendations",
+    "text": "Software Recommendations\n\nData Extraction and Cleaning: Use Python for extracting and cleaning data from SQL databases.\nNLP Processing of Clinical Notes: Tools like NILE, cTAKES, HITEx, MedTagger, MetaMap, OBO Annotator, or Stanford CoreNLP for NER and semantic analysis.\nPost-Processing: Pandas for standard processing; Dask/Polars for parallel processing of large datasets.",
+    "crumbs": [
+      "Overview & Prerequisites"
+    ]
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "Function Reference",
+    "section": "",
+    "text": "Function\nDescription\nLanguage\n\n\n\n\nclean_data_by_batch\nProcess large CSV files in batches by subject ID with cleaning, filtering, and formatting\nPython\n\n\nsummarize\nBatch reading and frequency counting for large datasets\nPython\n\n\nsummarize_unmapped\nExtract and summarize unmapped child entities with frequency counts\nPython\n\n\nget_code_counts_per_patient\nCount parent code frequency per patient\nPython\n\n\nget_month\nConvert days to months using floor/ceil logic\nPython\n\n\nget_monthly_counts\nMonthly event aggregation relative to diagnosis date\nPython",
+    "crumbs": [
+      "All Functions"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#preprocessing-functions",
+    "href": "reference/index.html#preprocessing-functions",
+    "title": "Function Reference",
+    "section": "",
+    "text": "Function\nDescription\nLanguage\n\n\n\n\nclean_data_by_batch\nProcess large CSV files in batches by subject ID with cleaning, filtering, and formatting\nPython\n\n\nsummarize\nBatch reading and frequency counting for large datasets\nPython\n\n\nsummarize_unmapped\nExtract and summarize unmapped child entities with frequency counts\nPython\n\n\nget_code_counts_per_patient\nCount parent code frequency per patient\nPython\n\n\nget_month\nConvert days to months using floor/ceil logic\nPython\n\n\nget_monthly_counts\nMonthly event aggregation relative to diagnosis date\nPython",
+    "crumbs": [
+      "All Functions"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#embedding-functions",
+    "href": "reference/index.html#embedding-functions",
+    "title": "Function Reference",
+    "section": "Embedding Functions",
+    "text": "Embedding Functions\n\n\n\nFunction\nDescription\nLanguage\n\n\n\n\nBONMI\nMain function for unified low-dimensional representation from PPMI matrices\nR\n\n\nBONMI Package\nOverview of the BONMI algorithm with Procrustes alignment and embedding extraction\nR\n\n\nProcrustes\nOrthogonal transformation for matrix alignment (minimizes Frobenius norm)\nR\n\n\nembedding\nExtract low-dimensional representation from SVD results\nR\n\n\nTextEncoder\nHuggingFace transformer wrapper for PLM-based embeddings (CODER, SapBERT, BioBERT, PubMedBERT)\nPython\n\n\nget_AUC_MS\nAUC calculation for embedding similarity evaluation\nR",
+    "crumbs": [
+      "All Functions"
+    ]
+  },
+  {
+    "objectID": "module1/index.html",
+    "href": "module1/index.html",
+    "title": "Module 1: Data Preprocessing",
+    "section": "",
+    "text": "Overview of the 4-step data preprocessing pipeline.",
+    "crumbs": [
+      "Overview"
+    ]
+  },
+  {
+    "objectID": "module1/cohort-creation.html",
+    "href": "module1/cohort-creation.html",
+    "title": "Step 4: Cohort Creation",
+    "section": "",
+    "text": "Defining disease cohorts and creating patient-level feature matrices.",
+    "crumbs": [
+      "Step 4: Cohort Creation"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "PEHRT: A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research",
+    "section": "",
+    "text": "PEHRT assumes that researchers are familiar with their EHR data sources, including documentation, data schema, and coding systems. PEHRT supports both structured data (e.g., coded diagnoses and procedures, prescribed medications, laboratory results) and unstructured text (e.g., clinical notes, radiology reports). EHR data may reside in relational databases or as flat files (CSV/Parquet/JSON) and do not need to conform to a Common Data Model. At minimum, PEHRT requires a unique patient identifier that is used across tables, a timestamp for each event, recorded event and meta data to interpret the record (codes along with their coding system or note text with the note type)\n\n\n\n\n\nThe PEHRT framework integrates structured and unstructured healthcare data across multiple institutions through three modules: (i) data cleaning, (ii) representation learning. These processes support downstream applications such as phenotyping, risk prediction, and federated learning\nComputing and Storage Requirements for EHR Data Processing\nThe required resources depend on the dataset’s scale. The following are some recommended setups:\n\n\n\n\n\n\n\n\n\n\n\nDataset Scale\nNode Setup\nCPU Cores\nRAM\nStorage\nNotes\n\n\n\n\nModerate (~100k patients)\nSingle node\n8–16\n32–64 GB\n≥3× raw data size\nR/Python Pandas framework or similar is sufficient.\n\n\nLarge (1–3 million patients)\nSingle powerful node\n32–64\n256–512 GB\n3–5× raw data size\nProcess data in patient batches; consider using Polars or Dask for parallel processing.\n\n\nLarge (1–3 million patients)\nDistributed cluster (5–10 nodes)\n8–32 each\n64–128 GB per node\n3–5× raw data size\nPrefer Parquet storage. Use Spark, Dask, Polars. Save intermediate results and perform data quality checks.\n\n\nVery large (&gt;5 million patients)\nSingle HPC node (large memory)\n~128\n~1 TB\n5x raw data size\nPrefer this option only if a cluster isn’t available. Use big data processing frameworks like Spark or Dask on a single high memory server. Save intermediate data and add data quality checks. Process data in batches. Use HPC scratch space\n\n\nVery large (&gt;5 million patients)\nDistributed HPC cluster (10–20 nodes)\n~32-64 each\n~128-256 TB each\n5x raw data size\nUse Parquet and a scalable engine (e.g., Spark, Dask). Checkpoint intermediate data and add data-quality checks. Process in batches as data grows. Use HPC scratch space\n\n\n\nSoftware Recommendations for EHR Data Processing\n\nData Extraction and Cleaning:\nUse Python for extracting and cleaning data from SQL databases.\nNLP-based Processing of Unstructured Clinical Notes:\nTools like NILE, cTAKES, HITEx, MedTagger, MetaMap, OBO Annotator, or Stanford CoreNLP are ideal for tasks such as:\n\nNamed Entity Recognition (NER): Identifying clinical conditions, symptoms, medications, lab tests, etc.\n\nSemantic Analysis: Extracting relevant clinical concepts from notes.\n\nComputational Libraries for Post-Processing:\nDepending on the dataset size, consider Python libraries like Pandas for standard processing or Dask/Polars for parallel processing to efficiently handle large datasets."
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "PEHRT: A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research",
+    "section": "",
+    "text": "PEHRT assumes that researchers are familiar with their EHR data sources, including documentation, data schema, and coding systems. PEHRT supports both structured data (e.g., coded diagnoses and procedures, prescribed medications, laboratory results) and unstructured text (e.g., clinical notes, radiology reports). EHR data may reside in relational databases or as flat files (CSV/Parquet/JSON) and do not need to conform to a Common Data Model. At minimum, PEHRT requires a unique patient identifier that is used across tables, a timestamp for each event, recorded event and meta data to interpret the record (codes along with their coding system or note text with the note type)\n\n\n\n\n\nThe PEHRT framework integrates structured and unstructured healthcare data across multiple institutions through three modules: (i) data cleaning, (ii) representation learning. These processes support downstream applications such as phenotyping, risk prediction, and federated learning\nComputing and Storage Requirements for EHR Data Processing\nThe required resources depend on the dataset’s scale. The following are some recommended setups:\n\n\n\n\n\n\n\n\n\n\n\nDataset Scale\nNode Setup\nCPU Cores\nRAM\nStorage\nNotes\n\n\n\n\nModerate (~100k patients)\nSingle node\n8–16\n32–64 GB\n≥3× raw data size\nR/Python Pandas framework or similar is sufficient.\n\n\nLarge (1–3 million patients)\nSingle powerful node\n32–64\n256–512 GB\n3–5× raw data size\nProcess data in patient batches; consider using Polars or Dask for parallel processing.\n\n\nLarge (1–3 million patients)\nDistributed cluster (5–10 nodes)\n8–32 each\n64–128 GB per node\n3–5× raw data size\nPrefer Parquet storage. Use Spark, Dask, Polars. Save intermediate results and perform data quality checks.\n\n\nVery large (&gt;5 million patients)\nSingle HPC node (large memory)\n~128\n~1 TB\n5x raw data size\nPrefer this option only if a cluster isn’t available. Use big data processing frameworks like Spark or Dask on a single high memory server. Save intermediate data and add data quality checks. Process data in batches. Use HPC scratch space\n\n\nVery large (&gt;5 million patients)\nDistributed HPC cluster (10–20 nodes)\n~32-64 each\n~128-256 TB each\n5x raw data size\nUse Parquet and a scalable engine (e.g., Spark, Dask). Checkpoint intermediate data and add data-quality checks. Process in batches as data grows. Use HPC scratch space\n\n\n\nSoftware Recommendations for EHR Data Processing\n\nData Extraction and Cleaning:\nUse Python for extracting and cleaning data from SQL databases.\nNLP-based Processing of Unstructured Clinical Notes:\nTools like NILE, cTAKES, HITEx, MedTagger, MetaMap, OBO Annotator, or Stanford CoreNLP are ideal for tasks such as:\n\nNamed Entity Recognition (NER): Identifying clinical conditions, symptoms, medications, lab tests, etc.\n\nSemantic Analysis: Extracting relevant clinical concepts from notes.\n\nComputational Libraries for Post-Processing:\nDepending on the dataset size, consider Python libraries like Pandas for standard processing or Dask/Polars for parallel processing to efficiently handle large datasets."
+  },
+  {
+    "objectID": "Roll-up_package.html",
+    "href": "Roll-up_package.html",
+    "title": "Roll-up Guidance",
+    "section": "",
+    "text": "This package provides valuable roll-up codes for EHR data processing. It includes a variety of functions, such as:\n\nrollup\nsummarize_unmapped\nfilter_rolledup_data\nrollup_data_by_batch"
+  },
+  {
+    "objectID": "Roll-up_package.html#detail",
+    "href": "Roll-up_package.html#detail",
+    "title": "Roll-up Guidance",
+    "section": "",
+    "text": "This package provides valuable roll-up codes for EHR data processing. It includes a variety of functions, such as:\n\nrollup\nsummarize_unmapped\nfilter_rolledup_data\nrollup_data_by_batch"
+  },
+  {
+    "objectID": "module1/code-rollup.html",
+    "href": "module1/code-rollup.html",
+    "title": "Step 2: Code Rollup",
+    "section": "",
+    "text": "Normalizing and rolling up EHR codes to standard vocabularies.",
+    "crumbs": [
+      "Step 2: Code Rollup"
+    ]
+  },
+  {
+    "objectID": "module1/data-cleaning.html",
+    "href": "module1/data-cleaning.html",
+    "title": "Step 1: Data Cleaning",
+    "section": "",
+    "text": "Cleaning EHR data: missingness, filtering, standardization, error detection, deduplication.",
+    "crumbs": [
+      "Step 1: Data Cleaning"
+    ]
+  },
+  {
+    "objectID": "module1/nlp.html",
+    "href": "module1/nlp.html",
+    "title": "Step 3: NLP Processing",
+    "section": "",
+    "text": "Processing unstructured clinical notes using NLP and UMLS concept mapping.",
+    "crumbs": [
+      "Step 3: NLP Processing"
+    ]
+  },
+  {
+    "objectID": "references.html",
+    "href": "references.html",
+    "title": "References",
+    "section": "",
+    "text": "All functions\n\n\n\nBONMI_package\nMulti-source Learning via Completion of Block-wise Overlapping Noisy Matrices\n\n\ntext_encode\nTextEncoder in module 2\n\n\nget_AUC_MS\nget_AUC_MS function in Module 2"
+  },
+  {
+    "objectID": "setup/mimic-access.html",
+    "href": "setup/mimic-access.html",
+    "title": "MIMIC-IV Access",
+    "section": "",
+    "text": "MIMIC-IV is a deidentified EHR dataset sourced from BIDMC Hospital. To gain access, follow these steps:\n\n\n\n\n\n\nBefore You Begin\n\n\n\nThe approval process can take several days. Start this step early.\n\n\nStep 1. Create a PhysioNet account and become a credentialed user. Register here.\nStep 2. Complete the required training listed here and submit your certificates here.\nStep 3. Sign the Data User Agreement here.\nOnce your access is approved, you will receive a notification via your registered email.\n\n\n\n\n\n\nMIMIC Resources\n\n\n\nFor users new to EHR data, we recommend watching the MIMIC data tutorial here. Comprehensive documentation is available at mimic.mit.edu.",
+    "crumbs": [
+      "MIMIC-IV Access"
+    ]
+  },
+  {
+    "objectID": "setup/mimic-access.html#gaining-access-to-mimic-iv-dataset",
+    "href": "setup/mimic-access.html#gaining-access-to-mimic-iv-dataset",
+    "title": "MIMIC-IV Access",
+    "section": "",
+    "text": "MIMIC-IV is a deidentified EHR dataset sourced from BIDMC Hospital. To gain access, follow these steps:\n\n\n\n\n\n\nBefore You Begin\n\n\n\nThe approval process can take several days. Start this step early.\n\n\nStep 1. Create a PhysioNet account and become a credentialed user. Register here.\nStep 2. Complete the required training listed here and submit your certificates here.\nStep 3. Sign the Data User Agreement here.\nOnce your access is approved, you will receive a notification via your registered email.\n\n\n\n\n\n\nMIMIC Resources\n\n\n\nFor users new to EHR data, we recommend watching the MIMIC data tutorial here. Comprehensive documentation is available at mimic.mit.edu.",
+    "crumbs": [
+      "MIMIC-IV Access"
+    ]
+  },
+  {
+    "objectID": "filter_rollup_data_function.html",
+    "href": "filter_rollup_data_function.html",
+    "title": "filter_rolledup_data",
+    "section": "",
+    "text": "The filter_rolledup_data function filters and retains only the rows with a Rollup_Status of 1, indicating successful rollup. It then keeps only the specified columns of interest.\n\ndef filter_rolledup_data(rolledup_data,cols_of_interest):\n    \n    filtered = rolledup_data[rolledup_data['Rollup_Status']==\"1\"]\n    \n    filtered = filtered[cols_of_interest]\n\n    filtered.drop_duplicates(inplace=True)\n    \n    return filtered"
+  },
+  {
+    "objectID": "filter_rollup_data_function.html#description",
+    "href": "filter_rollup_data_function.html#description",
+    "title": "filter_rolledup_data",
+    "section": "",
+    "text": "The filter_rolledup_data function filters and retains only the rows with a Rollup_Status of 1, indicating successful rollup. It then keeps only the specified columns of interest.\n\ndef filter_rolledup_data(rolledup_data,cols_of_interest):\n    \n    filtered = rolledup_data[rolledup_data['Rollup_Status']==\"1\"]\n    \n    filtered = filtered[cols_of_interest]\n\n    filtered.drop_duplicates(inplace=True)\n    \n    return filtered"
+  },
+  {
+    "objectID": "filter_rollup_data_function.html#input",
+    "href": "filter_rollup_data_function.html#input",
+    "title": "filter_rolledup_data",
+    "section": "Input",
+    "text": "Input\n\nrolledup_data (pandas.DataFrame):\nThe DataFrame resulting from the rollup function, which includes the Rollup_Status column.\ncols_of_interest (list):\nA list of column names to retain in the filtered DataFrame."
+  },
+  {
+    "objectID": "filter_rollup_data_function.html#output",
+    "href": "filter_rollup_data_function.html#output",
+    "title": "filter_rolledup_data",
+    "section": "Output",
+    "text": "Output\n\nfiltered (pandas.DataFrame):\nA DataFrame with rows where Rollup_Status equals 1, containing only the columns specified in cols_of_interest."
+  },
+  {
+    "objectID": "filter_rollup_data_function.html#see-also",
+    "href": "filter_rollup_data_function.html#see-also",
+    "title": "filter_rolledup_data",
+    "section": "See also",
+    "text": "See also\nSee Roll-up_package."
+  },
+  {
+    "objectID": "reference/embeddings/embedding.html",
+    "href": "reference/embeddings/embedding.html",
+    "title": "Embedding",
+    "section": "",
+    "text": "The embedding function extracts a low-dimensional representation from the results of a singular value decomposition (SVD). This function is useful for dimensionality reduction, creating a compact embedding that preserves significant data characteristics.\n\nembedding&lt;-function(fit,r){\n  embed &lt;- fit$u[,1:r]%*%diag(sqrt(fit$d[1:r]))\n  embed\n}",
+    "crumbs": [
+      "Embeddings",
+      "embedding"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/embedding.html#description",
+    "href": "reference/embeddings/embedding.html#description",
+    "title": "Embedding",
+    "section": "",
+    "text": "The embedding function extracts a low-dimensional representation from the results of a singular value decomposition (SVD). This function is useful for dimensionality reduction, creating a compact embedding that preserves significant data characteristics.\n\nembedding&lt;-function(fit,r){\n  embed &lt;- fit$u[,1:r]%*%diag(sqrt(fit$d[1:r]))\n  embed\n}",
+    "crumbs": [
+      "Embeddings",
+      "embedding"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/embedding.html#arguments",
+    "href": "reference/embeddings/embedding.html#arguments",
+    "title": "Embedding",
+    "section": "Arguments",
+    "text": "Arguments\n\nfit: An object containing the SVD results, with components u (left singular vectors) and d (singular values).\nr: The target dimensionality for the embedding (number of components to retain).",
+    "crumbs": [
+      "Embeddings",
+      "embedding"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/embedding.html#output",
+    "href": "reference/embeddings/embedding.html#output",
+    "title": "Embedding",
+    "section": "Output",
+    "text": "Output\n\nReturns a matrix representing the embedding of the data, obtained by multiplying the first r columns of u with the diagonal matrix of the square root of the first r singular values.",
+    "crumbs": [
+      "Embeddings",
+      "embedding"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/embedding.html#see-also",
+    "href": "reference/embeddings/embedding.html#see-also",
+    "title": "Embedding",
+    "section": "See also",
+    "text": "See also\nSee BONMI Package for code example.",
+    "crumbs": [
+      "Embeddings",
+      "embedding"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/procrustes.html",
+    "href": "reference/embeddings/procrustes.html",
+    "title": "Procrustes",
+    "section": "",
+    "text": "The Procrustes function computes an orthogonal transformation matrix that aligns two matrices (X1 and X2) by minimizing the Frobenius norm of their difference. This transformation ensures that X2 is rotated to best match X1.\n\nProcrustes &lt;- function(X1,X2){\n  #Return Omega = arg min||X1 - X2 Omgea||_F\n  H = t(X2)%*%X1\n  mod = svd(H)\n  return(mod$u%*%t(mod$v))\n}",
+    "crumbs": [
+      "Embeddings",
+      "Procrustes"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/procrustes.html#description",
+    "href": "reference/embeddings/procrustes.html#description",
+    "title": "Procrustes",
+    "section": "",
+    "text": "The Procrustes function computes an orthogonal transformation matrix that aligns two matrices (X1 and X2) by minimizing the Frobenius norm of their difference. This transformation ensures that X2 is rotated to best match X1.\n\nProcrustes &lt;- function(X1,X2){\n  #Return Omega = arg min||X1 - X2 Omgea||_F\n  H = t(X2)%*%X1\n  mod = svd(H)\n  return(mod$u%*%t(mod$v))\n}",
+    "crumbs": [
+      "Embeddings",
+      "Procrustes"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/procrustes.html#arguments",
+    "href": "reference/embeddings/procrustes.html#arguments",
+    "title": "Procrustes",
+    "section": "Arguments",
+    "text": "Arguments\n\nX1: A matrix to be used as the reference for alignment.\nX2: A matrix to be transformed and aligned with X1.",
+    "crumbs": [
+      "Embeddings",
+      "Procrustes"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/procrustes.html#output",
+    "href": "reference/embeddings/procrustes.html#output",
+    "title": "Procrustes",
+    "section": "Output",
+    "text": "Output\n\nReturns an orthogonal transformation matrix Ω such that \\(\\left \\| X1-X2 \\Omega  \\right\\| _F\\) is minimized.",
+    "crumbs": [
+      "Embeddings",
+      "Procrustes"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/procrustes.html#see-also",
+    "href": "reference/embeddings/procrustes.html#see-also",
+    "title": "Procrustes",
+    "section": "See also",
+    "text": "See also\nSee BONMI Package for code example.",
+    "crumbs": [
+      "Embeddings",
+      "Procrustes"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/clean-data-by-batch.html",
+    "href": "reference/preprocessing/clean-data-by-batch.html",
+    "title": "clean_data_by_batch",
+    "section": "",
+    "text": "The clean_data_by_batch function processes a large input CSV file in batches based on subject IDs and their associated batch numbers. For each batch, it filters, cleans, and formats the data according to specified columns of interest. The cleaned data is then saved as separate files for each batch. This function is designed to handle large datasets efficiently and ensure data consistency for downstream analysis.\n\n## Ignore the function below, we are defining functions so that we can print and save the info in a log file\n\ndef setup_logger(log_type,log_file):\n\n    log_folder = os.path.join(\"log_folder\", log_type)\n    \n    # Ensure the log folder exists\n    os.makedirs(log_folder, exist_ok=True)\n    \n    # Define the full path for the log file\n    log_filepath = os.path.join(log_folder, log_file)\n\n    # Delete the log file if it exists\n    if os.path.exists(log_filepath):\n        os.remove(log_filepath)\n    \n    for handler in logging.root.handlers[:]:\n        logging.root.removeHandler(handler)\n\n    logging.basicConfig(level=logging.DEBUG, format='%(message)s', handlers=[logging.FileHandler(log_filepath)])\n\n# Define the function to print and log messages\ndef print_and_log_cleaning(message):\n    logging.info(message)  # Log message to the specific log file\n    \n#################################################################################################\n\n\ndef missing_values_summary(df):\n    missing_values = df.isna().sum()\n    missing_df = pd.DataFrame({'Column Name': missing_values.index, 'Missing Values Count': missing_values.values})\n    print_and_log_cleaning(\"Missing Values Count:\")\n    print_and_log_cleaning(missing_df)\n\n\n\ndef clean_data(df, cols_of_interest, time_col):\n\n    missing_values_summary(df)\n\n    print_and_log_cleaning(f\"Initial number of rows: {df.shape[0]}\")\n\n    print_and_log_cleaning(\"Keeping only the essential columns\")\n    df = df[cols_of_interest]\n\n    if df.isna().sum().any():\n        df = df.dropna()\n        print_and_log_cleaning(f\"Number of rows after dropping na rows: {df.shape[0]}\")\n    else:\n        print_and_log_cleaning(\"No rows with missing values to drop.\")\n\n    print_and_log_cleaning(\"Extracting only the date info\")\n    df[time_col] = df[time_col].str[:10]\n\n    print_and_log_cleaning(\"Renaming the columns\")\n    df = df.rename(columns={time_col: \"date\"})\n\n    print_and_log_cleaning(\"Checking for duplicate rows\")\n    if df.duplicated().sum() &gt; 0:\n        print_and_log_cleaning(\"Duplicate rows found. Removing duplicates:\")\n        df = df.drop_duplicates()\n        return df\n    else:\n        print_and_log_cleaning(\"No duplicate rows found.\")\n        return df\n\n\ndef clean_data_batch_supportfunc(df, cols_of_interest):\n\n    missing_values_summary(df)\n\n    print_and_log_cleaning(f\"Initial number of rows: {df.shape[0]}\")\n\n    if df.isna().sum().any():\n        df.dropna(inplace=True)\n        print_and_log_cleaning(f\"Number of rows after dropping na rows: {df.shape[0]}\")\n    else:\n        print_and_log_cleaning(\"No rows with missing values to drop.\")\n\n    print_and_log_cleaning(\"Extracting only the date info\")\n    df[cols_of_interest['date']] = df[cols_of_interest['date']].str[:10]\n  \n\n    print_and_log_cleaning(\"Renaming the columns\")\n    df = df.rename(columns={cols_of_interest['date']: \"date\"})\n    df = df.rename(columns={cols_of_interest['code']: \"code\"})\n\n    print_and_log_cleaning(\"Checking for duplicate rows\")\n    if df.duplicated().sum() &gt; 0:\n        print_and_log_cleaning(\"Duplicate rows found. Removing duplicates:\")\n        df = df.drop_duplicates()\n        return df\n    else:\n        print_and_log_cleaning(\"No duplicate rows found.\")\n        return df\n\n\ndef file_line_count(file_path):\n    count = 0\n    with open(file_path, 'r') as file:\n        for line in file:\n            count += 1\n    return count\n\n\ndef clean_data_by_batch(input_file_path, patient_ids, cols_of_interest, data_name, num_rows_to_load=1500000):\n    #Coding system will be a list of columns if the coding system is defined in the input data, if not, you can pass a single value list\n\n    filename = os.path.splitext(os.path.basename(input_file_path))[0]\n\n    # Set up logger for cleaning function\n    setup_logger(\"cleaning\",f\"{data_name}_{filename}.txt\")  # Create log folder if necessary and set up logging\n\n \n    # Create a dictionary for batch_num lookup based on subject_id\n    batch_lookup = dict(zip(patient_ids['subject_id'], patient_ids['batch_num']))\n    \n    # Get the list of unique batch numbers from patient_ids\n    unique_batch_nums = patient_ids['batch_num'].unique()\n\n    output_dir = f'Cleaned_RawData/{data_name}'\n    os.makedirs(output_dir, exist_ok=True)\n\n    # Iterate over each batch number\n    for batch_num in tqdm(unique_batch_nums, desc=\"Processing batches\", unit=\"batch\"):\n        \n        print_and_log_cleaning(f\"\\nProcessing batch {batch_num}:\")\n\n        collected_data = []\n\n        non_none_cols_of_interest = [item for key, item in cols_of_interest.items() if item is not None and key != \"coding_system\"\n]\n        \n        chunk_iter = pd.read_csv(input_file_path, chunksize=num_rows_to_load, usecols=non_none_cols_of_interest , dtype=str)\n        \n        # Process each chunk and collect data for the current batch\n        for chunk_idx, chunk in enumerate(chunk_iter):\n            print_and_log_cleaning(f\"------ Processing  batch {batch_num} chunk{chunk_idx + 1}\")\n\n            batch_data = chunk[chunk['subject_id'].map(batch_lookup) == batch_num]\n            \n            if not batch_data.empty:\n                collected_data.append(batch_data)\n        \n        # If we found data for this batch, clean and save it\n        if collected_data:\n\n            final_batch_data = pd.concat(collected_data, ignore_index=True)\n\n            print_and_log_cleaning(final_batch_data)\n\n            if cols_of_interest.get('code_version'):\n                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)\n                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system'] + cleaned_batch_data[cols_of_interest['code_version']]\n\n                \n            else:\n                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)\n                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system']\n\n            cleaned_batch_data=cleaned_batch_data[['subject_id','date','code','coding_system']]\n            \n            # Prepare the output file path dynamically using the data_name and batch_num\n            output_file = os.path.join(output_dir, f\"{data_name.lower()}_batch{batch_num}_{filename}.csv\")\n\n            \n            # Save the cleaned data to the file\n            cleaned_batch_data.to_csv(output_file, index=False)\n            print_and_log_cleaning(f\"Batch {batch_num} cleaned data saved to {output_file}.\")\n        else:\n            print_and_log_cleaning(f\"Warning: No data found for batch {batch_num}.\")\n \n    \n    \n    print_and_log_cleaning(f\"\\nCleaning complete. All batches processed and saved in the '{output_dir}' directory.\")",
+    "crumbs": [
+      "Preprocessing",
+      "clean_data_by_batch"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/clean-data-by-batch.html#description",
+    "href": "reference/preprocessing/clean-data-by-batch.html#description",
+    "title": "clean_data_by_batch",
+    "section": "",
+    "text": "The clean_data_by_batch function processes a large input CSV file in batches based on subject IDs and their associated batch numbers. For each batch, it filters, cleans, and formats the data according to specified columns of interest. The cleaned data is then saved as separate files for each batch. This function is designed to handle large datasets efficiently and ensure data consistency for downstream analysis.\n\n## Ignore the function below, we are defining functions so that we can print and save the info in a log file\n\ndef setup_logger(log_type,log_file):\n\n    log_folder = os.path.join(\"log_folder\", log_type)\n    \n    # Ensure the log folder exists\n    os.makedirs(log_folder, exist_ok=True)\n    \n    # Define the full path for the log file\n    log_filepath = os.path.join(log_folder, log_file)\n\n    # Delete the log file if it exists\n    if os.path.exists(log_filepath):\n        os.remove(log_filepath)\n    \n    for handler in logging.root.handlers[:]:\n        logging.root.removeHandler(handler)\n\n    logging.basicConfig(level=logging.DEBUG, format='%(message)s', handlers=[logging.FileHandler(log_filepath)])\n\n# Define the function to print and log messages\ndef print_and_log_cleaning(message):\n    logging.info(message)  # Log message to the specific log file\n    \n#################################################################################################\n\n\ndef missing_values_summary(df):\n    missing_values = df.isna().sum()\n    missing_df = pd.DataFrame({'Column Name': missing_values.index, 'Missing Values Count': missing_values.values})\n    print_and_log_cleaning(\"Missing Values Count:\")\n    print_and_log_cleaning(missing_df)\n\n\n\ndef clean_data(df, cols_of_interest, time_col):\n\n    missing_values_summary(df)\n\n    print_and_log_cleaning(f\"Initial number of rows: {df.shape[0]}\")\n\n    print_and_log_cleaning(\"Keeping only the essential columns\")\n    df = df[cols_of_interest]\n\n    if df.isna().sum().any():\n        df = df.dropna()\n        print_and_log_cleaning(f\"Number of rows after dropping na rows: {df.shape[0]}\")\n    else:\n        print_and_log_cleaning(\"No rows with missing values to drop.\")\n\n    print_and_log_cleaning(\"Extracting only the date info\")\n    df[time_col] = df[time_col].str[:10]\n\n    print_and_log_cleaning(\"Renaming the columns\")\n    df = df.rename(columns={time_col: \"date\"})\n\n    print_and_log_cleaning(\"Checking for duplicate rows\")\n    if df.duplicated().sum() &gt; 0:\n        print_and_log_cleaning(\"Duplicate rows found. Removing duplicates:\")\n        df = df.drop_duplicates()\n        return df\n    else:\n        print_and_log_cleaning(\"No duplicate rows found.\")\n        return df\n\n\ndef clean_data_batch_supportfunc(df, cols_of_interest):\n\n    missing_values_summary(df)\n\n    print_and_log_cleaning(f\"Initial number of rows: {df.shape[0]}\")\n\n    if df.isna().sum().any():\n        df.dropna(inplace=True)\n        print_and_log_cleaning(f\"Number of rows after dropping na rows: {df.shape[0]}\")\n    else:\n        print_and_log_cleaning(\"No rows with missing values to drop.\")\n\n    print_and_log_cleaning(\"Extracting only the date info\")\n    df[cols_of_interest['date']] = df[cols_of_interest['date']].str[:10]\n  \n\n    print_and_log_cleaning(\"Renaming the columns\")\n    df = df.rename(columns={cols_of_interest['date']: \"date\"})\n    df = df.rename(columns={cols_of_interest['code']: \"code\"})\n\n    print_and_log_cleaning(\"Checking for duplicate rows\")\n    if df.duplicated().sum() &gt; 0:\n        print_and_log_cleaning(\"Duplicate rows found. Removing duplicates:\")\n        df = df.drop_duplicates()\n        return df\n    else:\n        print_and_log_cleaning(\"No duplicate rows found.\")\n        return df\n\n\ndef file_line_count(file_path):\n    count = 0\n    with open(file_path, 'r') as file:\n        for line in file:\n            count += 1\n    return count\n\n\ndef clean_data_by_batch(input_file_path, patient_ids, cols_of_interest, data_name, num_rows_to_load=1500000):\n    #Coding system will be a list of columns if the coding system is defined in the input data, if not, you can pass a single value list\n\n    filename = os.path.splitext(os.path.basename(input_file_path))[0]\n\n    # Set up logger for cleaning function\n    setup_logger(\"cleaning\",f\"{data_name}_{filename}.txt\")  # Create log folder if necessary and set up logging\n\n \n    # Create a dictionary for batch_num lookup based on subject_id\n    batch_lookup = dict(zip(patient_ids['subject_id'], patient_ids['batch_num']))\n    \n    # Get the list of unique batch numbers from patient_ids\n    unique_batch_nums = patient_ids['batch_num'].unique()\n\n    output_dir = f'Cleaned_RawData/{data_name}'\n    os.makedirs(output_dir, exist_ok=True)\n\n    # Iterate over each batch number\n    for batch_num in tqdm(unique_batch_nums, desc=\"Processing batches\", unit=\"batch\"):\n        \n        print_and_log_cleaning(f\"\\nProcessing batch {batch_num}:\")\n\n        collected_data = []\n\n        non_none_cols_of_interest = [item for key, item in cols_of_interest.items() if item is not None and key != \"coding_system\"\n]\n        \n        chunk_iter = pd.read_csv(input_file_path, chunksize=num_rows_to_load, usecols=non_none_cols_of_interest , dtype=str)\n        \n        # Process each chunk and collect data for the current batch\n        for chunk_idx, chunk in enumerate(chunk_iter):\n            print_and_log_cleaning(f\"------ Processing  batch {batch_num} chunk{chunk_idx + 1}\")\n\n            batch_data = chunk[chunk['subject_id'].map(batch_lookup) == batch_num]\n            \n            if not batch_data.empty:\n                collected_data.append(batch_data)\n        \n        # If we found data for this batch, clean and save it\n        if collected_data:\n\n            final_batch_data = pd.concat(collected_data, ignore_index=True)\n\n            print_and_log_cleaning(final_batch_data)\n\n            if cols_of_interest.get('code_version'):\n                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)\n                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system'] + cleaned_batch_data[cols_of_interest['code_version']]\n\n                \n            else:\n                cleaned_batch_data = clean_data_batch_supportfunc(final_batch_data, cols_of_interest)\n                cleaned_batch_data['coding_system'] = cols_of_interest['coding_system']\n\n            cleaned_batch_data=cleaned_batch_data[['subject_id','date','code','coding_system']]\n            \n            # Prepare the output file path dynamically using the data_name and batch_num\n            output_file = os.path.join(output_dir, f\"{data_name.lower()}_batch{batch_num}_{filename}.csv\")\n\n            \n            # Save the cleaned data to the file\n            cleaned_batch_data.to_csv(output_file, index=False)\n            print_and_log_cleaning(f\"Batch {batch_num} cleaned data saved to {output_file}.\")\n        else:\n            print_and_log_cleaning(f\"Warning: No data found for batch {batch_num}.\")\n \n    \n    \n    print_and_log_cleaning(f\"\\nCleaning complete. All batches processed and saved in the '{output_dir}' directory.\")",
+    "crumbs": [
+      "Preprocessing",
+      "clean_data_by_batch"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/clean-data-by-batch.html#input",
+    "href": "reference/preprocessing/clean-data-by-batch.html#input",
+    "title": "clean_data_by_batch",
+    "section": "Input",
+    "text": "Input\nThe function accepts the following arguments:\n\ninput_file_path (str):\nThe path to the input CSV file to be processed.\npatient_ids (pandas.DataFrame):\nA DataFrame containing subject_id and batch_num columns. It maps each subject to their respective batch.\ncols_of_interest (dict):\nA dictionary specifying the columns to be processed. The keys represent logical identifiers (e.g., date, code, code_version), and the values are the corresponding column names in the CSV.\ndata_name (str):\nA descriptive name for the dataset being processed. It is used for naming the output files.\nnum_rows_to_load (int, optional, default=1,500,000):\nThe number of rows to read at a time when processing the input file in chunks. This allows for memory-efficient processing of large files.",
+    "crumbs": [
+      "Preprocessing",
+      "clean_data_by_batch"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/clean-data-by-batch.html#output",
+    "href": "reference/preprocessing/clean-data-by-batch.html#output",
+    "title": "clean_data_by_batch",
+    "section": "Output",
+    "text": "Output\nThe function does not return any values but performs the following actions:\n\nLogs:\nA log file is generated in a log_folder/cleaning directory, capturing detailed information about the cleaning process for each batch.\nCleaned Data Files:\nFor each batch, a CSV file containing the cleaned data is saved in the Cleaned_RawData/{data_name} directory. Each file includes the following columns:\n\nsubject_id\ndate (formatted as YYYY-MM-DD)\ncode\ncoding_system\n\nConsole Output:\nProgress and warnings are printed to the console during the execution of the function.",
+    "crumbs": [
+      "Preprocessing",
+      "clean_data_by_batch"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-month.html",
+    "href": "reference/preprocessing/get-month.html",
+    "title": "get_month",
+    "section": "",
+    "text": "The get_month function calculates the approximate month from a given number of days. It uses different rounding methods depending on whether the number of days is positive, negative, or zero.\n\ndef get_month(days):\n    if days == 0:\n        return 1\n\n    elif days &gt; 0:\n        return math.ceil(days / 30)\n\n    elif days &lt; 0:\n        return math.floor(days / 30)",
+    "crumbs": [
+      "Preprocessing",
+      "get_month"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-month.html#description",
+    "href": "reference/preprocessing/get-month.html#description",
+    "title": "get_month",
+    "section": "",
+    "text": "The get_month function calculates the approximate month from a given number of days. It uses different rounding methods depending on whether the number of days is positive, negative, or zero.\n\ndef get_month(days):\n    if days == 0:\n        return 1\n\n    elif days &gt; 0:\n        return math.ceil(days / 30)\n\n    elif days &lt; 0:\n        return math.floor(days / 30)",
+    "crumbs": [
+      "Preprocessing",
+      "get_month"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-month.html#input",
+    "href": "reference/preprocessing/get-month.html#input",
+    "title": "get_month",
+    "section": "Input",
+    "text": "Input\n\ndays (int):\nThe number of days for which the corresponding month is to be calculated.",
+    "crumbs": [
+      "Preprocessing",
+      "get_month"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/get-month.html#output",
+    "href": "reference/preprocessing/get-month.html#output",
+    "title": "get_month",
+    "section": "Output",
+    "text": "Output\n\nmonth (int):\nThe month corresponding to the input days:\n\n1 for days = 0\nRounded up for positive days\nRounded down for negative days",
+    "crumbs": [
+      "Preprocessing",
+      "get_month"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize-unmapped.html",
+    "href": "reference/preprocessing/summarize-unmapped.html",
+    "title": "summarize_unmapped",
+    "section": "",
+    "text": "The summarize_unmapped function extracts and summarizes unmapped child entities, identifying their frequency in the data.\n\ndef summarize_unmapped(rolledup_data, child_column):\n    \n    rolledup_data_unmapped = rolledup_data[rolledup_data[\"Rollup_Status\"]==\"0\"]\n    \n    unique_patient_code_pairs = rolledup_data_unmapped[['subject_id', child_column]].drop_duplicates()\n\n    unmapped_code_frequencies = unique_patient_code_pairs[[child_column]].value_counts().reset_index(name='counts')\n\n    unmapped_code_frequencies = unmapped_code_frequencies.rename(columns={'index': child_column})\n    \n    return unmapped_code_frequencies",
+    "crumbs": [
+      "Preprocessing",
+      "summarize_unmapped"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize-unmapped.html#description",
+    "href": "reference/preprocessing/summarize-unmapped.html#description",
+    "title": "summarize_unmapped",
+    "section": "",
+    "text": "The summarize_unmapped function extracts and summarizes unmapped child entities, identifying their frequency in the data.\n\ndef summarize_unmapped(rolledup_data, child_column):\n    \n    rolledup_data_unmapped = rolledup_data[rolledup_data[\"Rollup_Status\"]==\"0\"]\n    \n    unique_patient_code_pairs = rolledup_data_unmapped[['subject_id', child_column]].drop_duplicates()\n\n    unmapped_code_frequencies = unique_patient_code_pairs[[child_column]].value_counts().reset_index(name='counts')\n\n    unmapped_code_frequencies = unmapped_code_frequencies.rename(columns={'index': child_column})\n    \n    return unmapped_code_frequencies",
+    "crumbs": [
+      "Preprocessing",
+      "summarize_unmapped"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize-unmapped.html#input",
+    "href": "reference/preprocessing/summarize-unmapped.html#input",
+    "title": "summarize_unmapped",
+    "section": "Input",
+    "text": "Input\n\nrolledup_data (pandas.DataFrame):\nThe DataFrame resulting from the rollup function, which includes the Rollup_Status column.\nchild_column (str):\nThe name of the column representing child entities in the rollup process.",
+    "crumbs": [
+      "Preprocessing",
+      "summarize_unmapped"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize-unmapped.html#output",
+    "href": "reference/preprocessing/summarize-unmapped.html#output",
+    "title": "summarize_unmapped",
+    "section": "Output",
+    "text": "Output\n\nunmapped_code_frequencies (pandas.DataFrame):\nA DataFrame containing two columns:\n\nchild_column: The unique unmapped child entities.\ncounts: The frequency of each unmapped entity.",
+    "crumbs": [
+      "Preprocessing",
+      "summarize_unmapped"
+    ]
+  },
+  {
+    "objectID": "reference/preprocessing/summarize-unmapped.html#see-also",
+    "href": "reference/preprocessing/summarize-unmapped.html#see-also",
+    "title": "summarize_unmapped",
+    "section": "See also",
+    "text": "See also\nSee also: rollup-related functions.",
+    "crumbs": [
+      "Preprocessing",
+      "summarize_unmapped"
+    ]
+  },
+  {
+    "objectID": "rollup_data_by_batch_function.html",
+    "href": "rollup_data_by_batch_function.html",
+    "title": "rollup_data_by_batch",
+    "section": "",
+    "text": "The rollup_data_by_batch function processes raw data files in batches to perform rollup operations, generate intermediate results, and produce summarized rollup outputs. It organizes the results into separate directories.\n\ndef rollup_data_by_batch(config, unrolled_data_folder):\n\n    folder_name = os.path.basename(unrolled_data_folder)\n    intermediate_dir = f\"Intermediate_Data/{folder_name}\"\n    rolledup_dir = f\"Rolledup_Data/{folder_name}\"\n    unrolled_summary_dir = \"Summary/Unrolled\"\n    \n\n    os.makedirs(intermediate_dir, exist_ok=True)\n    os.makedirs(rolledup_dir, exist_ok=True)\n    os.makedirs(unrolled_summary_dir, exist_ok=True)\n\n    unrolled_freq_list = []\n\n    files = os.listdir(unrolled_data_folder)\n\n    batches = [file.split(\"_\")[1] for file in files]\n    unique_batches = set(batches)\n\n    for batch in unique_batches:\n        load_files = [file for file in files if batch in file]\n        print(load_files)\n\n        if len(load_files)==1:\n            filepath = os.path.join(unrolled_data_folder, load_files[0])\n            file_df = pd.read_csv(filepath, dtype=str)\n            \n        else:\n            df_list = []\n            for file in load_files:\n                filepath = os.path.join(unrolled_data_folder, file)\n                df_list.append(pd.read_csv(filepath, dtype=str))\n            file_df = pd.concat(df_list)\n            \n        print(f\"processing Batch: {batch}\")\n        \n        intermediate_df = rollup(file_df, config[\"rollup_mapping\"], [config['child_column'],\"coding_system\"], config['parent_column'])\n        intermediate_file = os.path.join(intermediate_dir, f\"intermediate_{batch}.csv\")\n        intermediate_df.to_csv(intermediate_file, index=False)\n        \n        unrolled_freq_list.append(summarize_unmapped(intermediate_df, config['child_column']))\n\n        cols_of_interest = [config['patient_id'],config['date'],config['parent_column']]\n        \n        only_rolledup_df = filter_rolledup_data(intermediate_df, cols_of_interest)\n        only_rolledup_filepath = os.path.join(rolledup_dir, f\"rolledup_{batch}.csv\")\n        only_rolledup_df.to_csv(only_rolledup_filepath, index=False)\n        \n        print(only_rolledup_df)\n\n\n    \n    unrolled_summary_file = os.path.join(unrolled_summary_dir , \"unrolled_\" + folder_name + \"_code_counts.csv\")\n\n    unrolled_summary =(\n        pd.concat(unrolled_freq_list)  # Concatenate list of DataFrames\n        .groupby(config['child_column'], as_index=False)[\"counts\"]\n        .sum()\n        .sort_values(by=\"counts\", ascending=False)\n        )\n\n    print(unrolled_summary)\n    unrolled_summary.to_csv(unrolled_summary_file, index=False)"
+  },
+  {
+    "objectID": "rollup_data_by_batch_function.html#description",
+    "href": "rollup_data_by_batch_function.html#description",
+    "title": "rollup_data_by_batch",
+    "section": "",
+    "text": "The rollup_data_by_batch function processes raw data files in batches to perform rollup operations, generate intermediate results, and produce summarized rollup outputs. It organizes the results into separate directories.\n\ndef rollup_data_by_batch(config, unrolled_data_folder):\n\n    folder_name = os.path.basename(unrolled_data_folder)\n    intermediate_dir = f\"Intermediate_Data/{folder_name}\"\n    rolledup_dir = f\"Rolledup_Data/{folder_name}\"\n    unrolled_summary_dir = \"Summary/Unrolled\"\n    \n\n    os.makedirs(intermediate_dir, exist_ok=True)\n    os.makedirs(rolledup_dir, exist_ok=True)\n    os.makedirs(unrolled_summary_dir, exist_ok=True)\n\n    unrolled_freq_list = []\n\n    files = os.listdir(unrolled_data_folder)\n\n    batches = [file.split(\"_\")[1] for file in files]\n    unique_batches = set(batches)\n\n    for batch in unique_batches:\n        load_files = [file for file in files if batch in file]\n        print(load_files)\n\n        if len(load_files)==1:\n            filepath = os.path.join(unrolled_data_folder, load_files[0])\n            file_df = pd.read_csv(filepath, dtype=str)\n            \n        else:\n            df_list = []\n            for file in load_files:\n                filepath = os.path.join(unrolled_data_folder, file)\n                df_list.append(pd.read_csv(filepath, dtype=str))\n            file_df = pd.concat(df_list)\n            \n        print(f\"processing Batch: {batch}\")\n        \n        intermediate_df = rollup(file_df, config[\"rollup_mapping\"], [config['child_column'],\"coding_system\"], config['parent_column'])\n        intermediate_file = os.path.join(intermediate_dir, f\"intermediate_{batch}.csv\")\n        intermediate_df.to_csv(intermediate_file, index=False)\n        \n        unrolled_freq_list.append(summarize_unmapped(intermediate_df, config['child_column']))\n\n        cols_of_interest = [config['patient_id'],config['date'],config['parent_column']]\n        \n        only_rolledup_df = filter_rolledup_data(intermediate_df, cols_of_interest)\n        only_rolledup_filepath = os.path.join(rolledup_dir, f\"rolledup_{batch}.csv\")\n        only_rolledup_df.to_csv(only_rolledup_filepath, index=False)\n        \n        print(only_rolledup_df)\n\n\n    \n    unrolled_summary_file = os.path.join(unrolled_summary_dir , \"unrolled_\" + folder_name + \"_code_counts.csv\")\n\n    unrolled_summary =(\n        pd.concat(unrolled_freq_list)  # Concatenate list of DataFrames\n        .groupby(config['child_column'], as_index=False)[\"counts\"]\n        .sum()\n        .sort_values(by=\"counts\", ascending=False)\n        )\n\n    print(unrolled_summary)\n    unrolled_summary.to_csv(unrolled_summary_file, index=False)"
+  },
+  {
+    "objectID": "rollup_data_by_batch_function.html#input",
+    "href": "rollup_data_by_batch_function.html#input",
+    "title": "rollup_data_by_batch",
+    "section": "Input",
+    "text": "Input\n\nconfig (dict):\nA dictionary containing configuration details:\n\nrollup_mapping (pandas.DataFrame): Rollup mapping table.\nchild_column (str): The column representing child entities.\nparent_column (str): The column representing parent entities.\npatient_id (str): The column representing patient IDs.\ndate (str): The column representing dates.\n\nunrolled_data_folder (str):\nThe folder path containing unrolled data files to be processed."
+  },
+  {
+    "objectID": "rollup_data_by_batch_function.html#output",
+    "href": "rollup_data_by_batch_function.html#output",
+    "title": "rollup_data_by_batch",
+    "section": "Output",
+    "text": "Output\nThe function does not return any values but produces the following: 1. Intermediate Files:\nIntermediate rollup files saved in the Intermediate_Data/{folder_name} directory.\n\nRolled-up Files:\nCleaned and rolled-up data files saved in the Rolledup_Data/{folder_name} directory.\nUnrolled Summary File:\nA summary of unmapped child codes, saved as unrolled_{folder_name}_code_counts.csv in the Summary/Unrolled directory.\nConsole Logs:\nLogs progress and key actions during execution."
+  },
+  {
+    "objectID": "rollup_data_by_batch_function.html#see-also",
+    "href": "rollup_data_by_batch_function.html#see-also",
+    "title": "rollup_data_by_batch",
+    "section": "See also",
+    "text": "See also\nSee Roll-up_package."
+  },
+  {
+    "objectID": "module3/index.html",
+    "href": "module3/index.html",
+    "title": "Module 3: Automated Harmonization",
+    "section": "",
+    "text": "The Block-wise Overlapping Noisy Matrix Integration (BONMI) algorithm helps combine data from different sources by aligning and completing SPPMI (Pointwise Mutual Information) matrices.\nIt populates this matrix by averaging SPPMI values from contributing institutions when overlaps exist and imputing missing values using orthogonal transformations. This approach enables the creation of a shared data representation, facilitating collaborative analysis across diverse datasets.\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\nHere we use the CSV files which are the output from Module 1 Step 4. The following script performs necessary preprocessing steps for BONMI analysis.\n\n# Load libraries\nlibrary(dplyr)\nlibrary(nlpembeds)\nlibrary(kgraph)\n\n# Set file path and load CSV files\nfolder_path &lt;- \"./step4_rolledup_finaldata/step4_rolledup_finaldata/Diagnoses\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\n\n# Initialize variables\nW = list()\ns = 0\nr = 350\n\n# Process each CSV file: load data, modify structure, and compute SPPMI\nfor(x in csv_files) {\n  s = s + 1\n  input_df = read.csv(x)\n  input_df$count &lt;- 1\n  input_df &lt;- input_df[ , c(2,1,3,4)]\n  colnames(input_df) &lt;- c(\"Month\", \"Patient\", \"Parent_Code\", \"Count\")\n  spm_cooc = build_df_cooc(input_df)\n  m_pmi = get_pmi(spm_cooc)\n  W[[s]] = m_pmi\n}\n\n# Apply the BONMI algorithm\nXhat &lt;- BONMI(W, r, weights=NULL, rsvd.use=FALSE)\n\n# Fit embeddings and evaluate using ROC\nset.seed(1)\nfit_kg_bonmi = fit_embeds_kg(Xhat, 'cosine', df_pairs = df_known_pairs[c(1, 3)])\npROC::plot.roc(fit_kg_bonmi$roc, print.auc = TRUE)\nprint(fit_kg_bonmi$roc)\n\n\nCall:\nroc.default(response = truth, predictor = sims, direction = \"&lt;\",     quiet = TRUE)\n\nData: sims in 2598 controls (truth 0) &lt; 2598 cases (truth 1).\nArea under the curve: 0.7915\nThe output of this process includes the embedding matrix and evaluation results from BONMI.",
+    "crumbs": [
+      "Automated Harmonization"
+    ]
+  },
+  {
+    "objectID": "module3/index.html#step-3.1-joint-embedding-training-with-bonmi",
+    "href": "module3/index.html#step-3.1-joint-embedding-training-with-bonmi",
+    "title": "Module 3: Automated Harmonization",
+    "section": "",
+    "text": "The Block-wise Overlapping Noisy Matrix Integration (BONMI) algorithm helps combine data from different sources by aligning and completing SPPMI (Pointwise Mutual Information) matrices.\nIt populates this matrix by averaging SPPMI values from contributing institutions when overlaps exist and imputing missing values using orthogonal transformations. This approach enables the creation of a shared data representation, facilitating collaborative analysis across diverse datasets.\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\nHere we use the CSV files which are the output from Module 1 Step 4. The following script performs necessary preprocessing steps for BONMI analysis.\n\n# Load libraries\nlibrary(dplyr)\nlibrary(nlpembeds)\nlibrary(kgraph)\n\n# Set file path and load CSV files\nfolder_path &lt;- \"./step4_rolledup_finaldata/step4_rolledup_finaldata/Diagnoses\"\ncsv_files &lt;- list.files(path = folder_path, pattern = \"*.csv\", full.names = TRUE)\n\n# Initialize variables\nW = list()\ns = 0\nr = 350\n\n# Process each CSV file: load data, modify structure, and compute SPPMI\nfor(x in csv_files) {\n  s = s + 1\n  input_df = read.csv(x)\n  input_df$count &lt;- 1\n  input_df &lt;- input_df[ , c(2,1,3,4)]\n  colnames(input_df) &lt;- c(\"Month\", \"Patient\", \"Parent_Code\", \"Count\")\n  spm_cooc = build_df_cooc(input_df)\n  m_pmi = get_pmi(spm_cooc)\n  W[[s]] = m_pmi\n}\n\n# Apply the BONMI algorithm\nXhat &lt;- BONMI(W, r, weights=NULL, rsvd.use=FALSE)\n\n# Fit embeddings and evaluate using ROC\nset.seed(1)\nfit_kg_bonmi = fit_embeds_kg(Xhat, 'cosine', df_pairs = df_known_pairs[c(1, 3)])\npROC::plot.roc(fit_kg_bonmi$roc, print.auc = TRUE)\nprint(fit_kg_bonmi$roc)\n\n\nCall:\nroc.default(response = truth, predictor = sims, direction = \"&lt;\",     quiet = TRUE)\n\nData: sims in 2598 controls (truth 0) &lt; 2598 cases (truth 1).\nArea under the curve: 0.7915\nThe output of this process includes the embedding matrix and evaluation results from BONMI.",
+    "crumbs": [
+      "Automated Harmonization"
+    ]
+  },
+  {
+    "objectID": "module3/index.html#step-3.2-joint-embedding-validation",
+    "href": "module3/index.html#step-3.2-joint-embedding-validation",
+    "title": "Module 3: Automated Harmonization",
+    "section": "Step 3.2: Joint embedding validation",
+    "text": "Step 3.2: Joint embedding validation\nBONMI embeddings can be improved by combining them with embeddings from pre-trained language models (PLMs). While BONMI focuses on aligning data from different sources, PLMs capture deeper meanings from text. Putting them together creates stronger embeddings, which are helpful for tasks like organizing and standardizing clinical data.\n\n\n\n\n\n\nNote\n\n\n\nThe following code examples in this part are written using the R programming language.\n\n\nHere we use the output from Module 2 Section C, nlpembedding, as one of the input data.\n\n# Convert embeddings and predictions to data frames\ndf_nlp_embedding &lt;- as.data.frame(nlpembedding)\ndf_bonmi &lt;- as.data.frame(Xhat)\n\ndf_nlp_embedding$RowNames &lt;- rownames(df_nlp_embedding)\ndf_bonmi$RowNames &lt;- rownames(df_bonmi)\n\n# Merge data frames by row names\ndf_bonmi_merged &lt;- merge(df_nlp_embedding, df_bonmi, by=\"RowNames\", all=FALSE)\n\n# Convert to matrix and assign row names\nm_bonmi_merged &lt;- as.matrix(df_bonmi_merged[, -1])\nrownames(m_bonmi_merged) &lt;- df_bonmi_merged$RowNames\n\n# Fit embeddings to a knowledge graph\nfit_kg_comb &lt;- fit_embeds_kg(m_bonmi_merged, 'cosine', df_pairs = df_known_pairs[c(1, 3)])\n\n# Plot and print ROC curve\npROC::plot.roc(fit_kg_comb$roc, print.auc = TRUE)\nprint(fit_kg_comb$roc)\n\n\nCall:\nroc.default(response = truth, predictor = sims, direction = \"&lt;\",     quiet = TRUE)\n\nData: sims in 2598 controls (truth 0) &lt; 2598 cases (truth 1).\nArea under the curve: 0.8705\nThe output of this process includes the embedding matrix and evaluation results.\nThe AUC for the combined BONMI and NLP embeddings is 0.8705, showing stronger performance compared to the embeddings generated in Module 2 (AUC = 0.7746). This improvement demonstrates that combining the two methods enhances the ability to distinguish co-occurring PheCode pairs from non-co-occurring ones.",
+    "crumbs": [
+      "Automated Harmonization"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi-package.html",
+    "href": "reference/embeddings/bonmi-package.html",
+    "title": "Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices",
+    "section": "",
+    "text": "Exploit the orthogonal Procrustes problem to align the eigenspace of the two sub-matrices, then complete the missing blocks by the inner product of the two low-rank components. Background and details about the methods can be found at Zhou et al.(2021)https://doi.org/10.48550/arXiv.2105.10360",
+    "crumbs": [
+      "Embeddings",
+      "BONMI Package"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi-package.html#detail",
+    "href": "reference/embeddings/bonmi-package.html#detail",
+    "title": "Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices",
+    "section": "Detail",
+    "text": "Detail\nThe BONMI_package.R script is designed for efficient matrix transformation and dimensionality reduction, particularly tailored for analyzing Positive Pointwise Mutual Information (PPMI) matrices. It features the Procrustes function, which aligns two matrices by computing an orthogonal transformation matrix that minimizes their Frobenius norm difference. The embedding function extracts a low-dimensional representation from singular value decomposition (SVD) results to simplify complex data. The main function, BONMI, processes a list of PPMI matrices, optionally applies weights, and leverages standard or randomized SVD to create reduced-rank embeddings. It aligns these embeddings with the Procrustes function, ensuring consistent representation across datasets.",
+    "crumbs": [
+      "Embeddings",
+      "BONMI Package"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi-package.html#reference",
+    "href": "reference/embeddings/bonmi-package.html#reference",
+    "title": "Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices",
+    "section": "Reference",
+    "text": "Reference\nZhou, D., Cai, T., & Lu, J. (2021). Multi-source learning via completion of block-wise overlapping noisy matrices. arXiv preprint arXiv:2105.10360.\nFinlayson, S. G., LePendu, P., and Shah, N. H. (2014). Building the graph of medicine from millions of clinical narratives. Scientific data, 1:140032.\nJohnson, A. E., Pollard, T. J., Shen, L., Li-Wei, H. L., Feng, M., Ghassemi, M., Moody, B., Szolovits, P., Celi, L. A., and Mark, R. G. (2016). Mimic-iii, a freely accessible critical care database. Scientific data, 3(1):1–9.",
+    "crumbs": [
+      "Embeddings",
+      "BONMI Package"
+    ]
+  },
+  {
+    "objectID": "reference/embeddings/bonmi-package.html#example",
+    "href": "reference/embeddings/bonmi-package.html#example",
+    "title": "Multi-source Learning via Completion of Block-wise Overlapping Noisy Matrices",
+    "section": "Example",
+    "text": "Example\n\n1. Setting Parameters and Generating Data\n\nset.seed(1)\nN = 3000  # The total number of entities (rows/columns of the matrix)\nr = 10    # The rank of the underlying low-rank matrix\nm = 5     # The number of data sources (matrices)\np = 0.1   # The probability of observing an entry in each source\n\n\nThe set.seed(1) ensures reproducibility by initializing the random number generator.\n\n\n\n2. Creating the Low-Rank Matrix W0\n\nX0 = matrix(rnorm(N*r), nrow=N)\nW0 = X0 %*% t(X0)\nrownames(W0) = colnames(W0) = paste0('code', 1:N)\n\n\nX0 is an N x r matrix filled with random values from a standard normal distribution.\nW0 is an N x N low-rank symmetric matrix obtained by multiplying X0 by its transpose.\nrownames and colnames are set to code1 to code3000 to identify the rows and columns.\n\n\n\n3. Creating Multiple Noisy Submatrices\n\nW = list()\nfor(s in 1:m){\n  ids = which(runif(N) &lt; p)  # Randomly selecting observed indices\n  Ns = length(ids)           # Number of observed entries\n  Es = matrix(rnorm(Ns*Ns, sd=s*0.01), nrow=Ns)  # Noise matrix with increasing variance\n  Es = Es + t(Es)            # Ensuring the noise matrix is symmetric\n  Ws = W0[ids, ids] + Es     # Adding noise to the observed submatrix\n  W[[s]] = Ws                # Storing the noisy submatrix in a list\n}\n\n\nThis loop creates m submatrices with block-wise observations.\nEach submatrix Ws is sampled from W0 and has added symmetric noise.\nThe result is stored in the list W, which contains all submatrices.\n\n\n\n4. Using BONMI for Matrix Completion\n\nXhat &lt;- BONMI(W, r, weights=NULL, rsvd.use=FALSE)\n#Xhat &lt;- BONMI(W, r, weights=NULL, rsvd.use=TRUE)\n\n  ##weights: the weight vector for the PPMI matrices. If weights = NULL, then it will be estimated from data. \n  ##rsvd.use: If rsvd.use=TRUE, we will use the 'rsvd' function to calculate the svd, which is much faster than the 'svd' function  when r is small. \n\n\nXhat is the output of the BONMI function, representing the estimated low-rank embeddings.\nThe weights parameter is set to NULL, and rsvd.use=FALSE means standard SVD is used.\nOptionally, rsvd.use=TRUE can be set to use randomized SVD.\n\n\n\n5. Post-Processing and Result Verification\n\ncodes = rownames(Xhat)\nWhat = Xhat %*% t(Xhat)\n\nid = match(codes, rownames(W0))\nWstar = W0[id, id]\n\n#BONMI's result\nnorm(What - Wstar, 'F') / norm(Wstar, 'F')\n\n[1] 0.003746704\n\nWhat is the reconstructed matrix using the output embeddings Xhat.\nid finds the matching indices between Xhat and the original matrix W0.\nWstar is the corresponding submatrix of W0 for comparison.\nThe result norm(What - Wstar, 'F') / norm(Wstar, 'F') calculates the relative Frobenius norm error, measuring how close What is to the true submatrix Wstar.\n\n\nMyeval&lt;-function(embed){\n  dict &lt;- data.frame(code = rownames(embed))\n  dict$group &lt;- sapply(dict$code, function(x) strsplit(x,\":\")[[1]][1]) \n  AUC &lt;- get_AUC_embed(embed = embed, pairs = pairs, WithNull = FALSE, dict = dict, \n                       normalize = FALSE, interested_code = NULL, nmax = 10000, myseed = 214)\n  sim = AUC$`codi-codi(similar)`\n  rel = AUC$`codi-codi(related)`\n  sim = sim[sim[,2]&gt;50,]\n  rel = rel[rel[,2]&gt;50,]\n  \n  AUC$weighted_sim = c('auc'=sum(sim[,1]*sim[,2])/sum(sim[,2]),'num'=sum(sim[,2]),'dim'=nrow(embed))\n  AUC$weighted_rel = c('auc'=sum(rel[,1]*rel[,2])/sum(rel[,2]),'num'=sum(rel[,2]),'dim'=nrow(embed))\n  AUC\n}\n\n\nX = Embed(fit.W,r) \nrownames(X) = rownames(Wm)\nX1 = X[rownames(X)%in%rownames(W[[1]]),]\nX2 = X[rownames(X)%in%rownames(W[[2]]),]\nX3 = X[rownames(X)%in%rownames(W[[3]]),]\nX4 = X[rownames(X)%in%rownames(W[[4]]),]\nX5 = X[rownames(X)%in%rownames(W[[5]]),]\n\nload(file='/n/data1/hsph/biostat/celehs/lab/SHARE/Relationship Pairs/PairsAlltypeUMLS_05122024.Rdata')\nsource(\"/n/data1/hsph/biostat/celehs/lab/SHARE/Relationship Pairs/AUC Code/get_AUC_MS.R\")\n\nauc.BONMI = Myeval(X)\nauc1 = Myeval(X1)\nauc2 = Myeval(X2)\nauc3 = Myeval(X3)\nauc4 = Myeval(X4)\nauc5 = Myeval(X5)\nres.sim = rbind(auc1$weighted_sim,auc2$weighted_sim,auc3$weighted_sim,auc4$weighted_sim,auc5$weighted_sim,auc.BONMI$weighted_sim)\nround(res.sim,3) \n# auc   num   dim\n# [1,] 0.920 16567  9620\n# [2,] 0.920 16000  6964\n# [3,] 0.895 18007 18432\n# [4,] 0.905 12261  5203\n# [5,] 0.879  2469  4341\n# [6,] 0.882 20276 31233\n\n# auc   num   dim\n# [1,] 0.943 16567  9620\n# [2,] 0.946 16000  6964\n# [3,] 0.926 18007 18432\n# [4,] 0.934 12261  5203\n# [5,] 0.922  2469  4341\n# [6,] 0.915 20276 31233\n\n# auc   num   dim\n# [1,] 0.944 16567  9620\n# [2,] 0.947 16000  6964\n# [3,] 0.924 18007 18432\n# [4,] 0.934 12261  5203\n# [5,] 0.926  2469  4341\n# [6,] 0.912 20276 31233\n\nres.rel = rbind(auc1$weighted_rel,auc2$weighted_rel,auc3$weighted_rel,auc4$weighted_rel,auc5$weighted_rel,auc.BONMI$weighted_rel)\nround(res.rel,3) \n# auc   num   dim\n# [1,] 0.849 20154  9620\n# [2,] 0.862 18334  6964\n# [3,] 0.842 22040 18432\n# [4,] 0.837 16219  5203\n# [5,] 0.806  4628  4341\n# [6,] 0.790 31291 31233\n\n# auc   num   dim\n# [1,] 0.867 20154  9620\n# [2,] 0.882 18334  6964\n# [3,] 0.862 22040 18432\n# [4,] 0.860 16219  5203\n# [5,] 0.842  4628  4341\n# [6,] 0.813 31291 31233\n\n# auc   num   dim\n# [1,] 0.867 20154  9620\n# [2,] 0.881 18334  6964\n# [3,] 0.860 22040 18432\n# [4,] 0.858 16219  5203\n# [5,] 0.845  4628  4341\n# [6,] 0.812 31291 31233",
+    "crumbs": [
+      "Embeddings",
+      "BONMI Package"
+    ]
+  }
+]
