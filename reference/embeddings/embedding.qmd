@@ -1,5 +1,29 @@
 ---
-title: "embedding"
+title: "Embedding"
+execute: 
+  enabled: false
 ---
 
-Placeholder.
+## Description
+
+The `embedding` function extracts a low-dimensional representation from the results of a singular value decomposition (SVD). This function is useful for dimensionality reduction, creating a compact embedding that preserves significant data characteristics.
+
+```{r}
+embedding<-function(fit,r){
+  embed <- fit$u[,1:r]%*%diag(sqrt(fit$d[1:r]))
+  embed
+}
+```
+
+## Arguments
+
+- `fit`: An object containing the SVD results, with components `u` (left singular vectors) and `d` (singular values).
+- `r`: The target dimensionality for the embedding (number of components to retain).
+
+## Output
+
+- Returns a matrix representing the embedding of the data, obtained by multiplying the first `r` columns of `u` with the diagonal matrix of the square root of the first `r` singular values.
+
+## See also
+
+See [BONMI Package](bonmi-package.qmd) for code example.

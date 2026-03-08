@@ -2,4 +2,24 @@
 title: "Function Reference"
 ---
 
-Comprehensive reference for all PEHRT functions.
+## Preprocessing Functions
+
+| Function | Description | Language |
+|---|---|---|
+| [`clean_data_by_batch`](preprocessing/clean-data-by-batch.qmd) | Process large CSV files in batches by subject ID with cleaning, filtering, and formatting | Python |
+| [`summarize`](preprocessing/summarize.qmd) | Batch reading and frequency counting for large datasets | Python |
+| [`summarize_unmapped`](preprocessing/summarize-unmapped.qmd) | Extract and summarize unmapped child entities with frequency counts | Python |
+| [`get_code_counts_per_patient`](preprocessing/get-code-counts-per-patient.qmd) | Count parent code frequency per patient | Python |
+| [`get_month`](preprocessing/get-month.qmd) | Convert days to months using floor/ceil logic | Python |
+| [`get_monthly_counts`](preprocessing/get-monthly-counts.qmd) | Monthly event aggregation relative to diagnosis date | Python |
+
+## Embedding Functions
+
+| Function | Description | Language |
+|---|---|---|
+| [`BONMI`](embeddings/bonmi.qmd) | Main function for unified low-dimensional representation from PPMI matrices | R |
+| [BONMI Package](embeddings/bonmi-package.qmd) | Overview of the BONMI algorithm with Procrustes alignment and embedding extraction | R |
+| [`Procrustes`](embeddings/procrustes.qmd) | Orthogonal transformation for matrix alignment (minimizes Frobenius norm) | R |
+| [`embedding`](embeddings/embedding.qmd) | Extract low-dimensional representation from SVD results | R |
+| [`TextEncoder`](embeddings/text-encode.qmd) | HuggingFace transformer wrapper for PLM-based embeddings (CODER, SapBERT, BioBERT, PubMedBERT) | Python |
+| [`get_AUC_MS`](embeddings/get-auc-ms.qmd) | AUC calculation for embedding similarity evaluation | R |
