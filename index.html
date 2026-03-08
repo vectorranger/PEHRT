@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>PEHRT: A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research – PEHRT</title>
+<title>PEHRT</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -250,112 +250,77 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content column-page" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">PEHRT: A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research</h1>
+
+
+
+<section id="pehrt" class="level1 hero-banner">
+<h1>PEHRT</h1>
+<div class="subtitle">
+<p>A Common Pipeline for Electronic Health Record (EHR) Data Harmonization for Translational Research</p>
 </div>
-
-
-
-<div class="quarto-title-meta column-page">
-
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
+<p><a href="./setup/index.html" class="btn-hero">Get Started</a></p>
+</section>
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
-<p>PEHRT assumes that researchers are familiar with their EHR data sources, including documentation, data schema, and coding systems. PEHRT supports both structured data (e.g., coded diagnoses and procedures, prescribed medications, laboratory results) and unstructured text (e.g., clinical notes, radiology reports). EHR data may reside in relational databases or as flat files (CSV/Parquet/JSON) and do not need to conform to a Common Data Model. At minimum, PEHRT requires a unique patient identifier that is used across tables, a timestamp for each event, recorded event and meta data to interpret the record (codes along with their coding system or note text with the note type)</p>
+<p>PEHRT is a modular framework for processing EHR data across multiple institutions. It supports both <strong>structured data</strong> (diagnoses, procedures, medications, labs) and <strong>unstructured text</strong> (clinical notes, radiology reports). EHR data may reside in relational databases or flat files (CSV/Parquet/JSON) — no Common Data Model required.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/chart_PEHRT_new.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:98.0%"></p>
+<p><img src="images/chart_PEHRT_new.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:90.0%"></p>
 </figure>
 </div>
-<p>The PEHRT framework integrates structured and unstructured healthcare data across multiple institutions through three modules: (i) data cleaning, (ii) representation learning. These processes support downstream applications such as phenotyping, risk prediction, and federated learning</p>
-<p><strong>Computing and Storage Requirements for EHR Data Processing</strong></p>
-<p>The required resources depend on the dataset’s scale. The following are some recommended setups:</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 16%">
-<col style="width: 16%">
-<col style="width: 16%">
-<col style="width: 16%">
-<col style="width: 16%">
-<col style="width: 16%">
-</colgroup>
-<thead>
-<tr class="header">
-<th><strong>Dataset Scale</strong></th>
-<th><strong>Node Setup</strong></th>
-<th style="text-align: right;"><strong>CPU Cores</strong></th>
-<th style="text-align: right;"><strong>RAM</strong></th>
-<th><strong>Storage</strong></th>
-<th><strong>Notes</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>Moderate (~100k patients)</strong></td>
-<td>Single node</td>
-<td style="text-align: right;">8–16</td>
-<td style="text-align: right;">32–64 GB</td>
-<td>≥3× raw data size</td>
-<td>R/Python Pandas framework or similar is sufficient.</td>
-</tr>
-<tr class="even">
-<td><strong>Large (1–3 million patients)</strong></td>
-<td>Single powerful node</td>
-<td style="text-align: right;">32–64</td>
-<td style="text-align: right;">256–512 GB</td>
-<td>3–5× raw data size</td>
-<td>Process data in patient batches; consider using Polars or Dask for parallel processing.</td>
-</tr>
-<tr class="odd">
-<td><strong>Large (1–3 million patients)</strong></td>
-<td>Distributed cluster (5–10 nodes)</td>
-<td style="text-align: right;">8–32 each</td>
-<td style="text-align: right;">64–128 GB per node</td>
-<td>3–5× raw data size</td>
-<td>Prefer Parquet storage. Use Spark, Dask, Polars. Save intermediate results and perform data quality checks.</td>
-</tr>
-<tr class="even">
-<td><strong>Very large (&gt;5 million patients)</strong></td>
-<td>Single HPC node (large memory)</td>
-<td style="text-align: right;">~128</td>
-<td style="text-align: right;">~1 TB</td>
-<td>5x raw data size</td>
-<td>Prefer this option only if a cluster isn’t available. Use big data processing frameworks like Spark or Dask on a single high memory server. Save intermediate data and add data quality checks. Process data in batches. Use HPC scratch space</td>
-</tr>
-<tr class="odd">
-<td><strong>Very large (&gt;5 million patients)</strong></td>
-<td>Distributed HPC cluster (10–20 nodes)</td>
-<td style="text-align: right;">~32-64 each</td>
-<td style="text-align: right;">~128-256 TB each</td>
-<td>5x raw data size</td>
-<td>Use Parquet and a scalable engine (e.g., Spark, Dask). Checkpoint intermediate data and add data-quality checks. Process in batches as data grows. Use HPC scratch space</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Software Recommendations for EHR Data Processing</strong></p>
+<div class="feature-list">
 <ul>
-<li><p><strong>Data Extraction and Cleaning:</strong><br>
-Use <strong>Python</strong> for extracting and cleaning data from SQL databases.</p></li>
-<li><p><strong>NLP-based Processing of Unstructured Clinical Notes:</strong><br>
-Tools like <strong>NILE</strong>, <strong>cTAKES</strong>, <strong>HITEx</strong>, <strong>MedTagger</strong>, <strong>MetaMap</strong>, <strong>OBO Annotator</strong>, or <strong>Stanford CoreNLP</strong> are ideal for tasks such as:</p>
-<ul>
-<li><strong>Named Entity Recognition (NER):</strong> Identifying clinical conditions, symptoms, medications, lab tests, etc.<br>
-</li>
-<li><strong>Semantic Analysis:</strong> Extracting relevant clinical concepts from notes.</li>
-</ul></li>
-<li><p><strong>Computational Libraries for Post-Processing:</strong><br>
-Depending on the dataset size, consider Python libraries like <strong>Pandas</strong> for standard processing or <strong>Dask/Polars</strong> for parallel processing to efficiently handle large datasets.</p></li>
+<li>Works with any EHR system — only requires patient ID, timestamps, and event codes</li>
+<li>Handles both ICD-9 and ICD-10 coding transitions</li>
+<li>Batch processing for datasets from 100K to 5M+ patients</li>
+<li>Dual-language support: Python for preprocessing, R for embeddings</li>
+<li>Multi-institution harmonization via the BONMI algorithm</li>
 </ul>
+</div>
+<hr class="section-divider">
+</section>
+<section id="modules" class="level2">
+<h2 class="anchored" data-anchor-id="modules">Modules</h2>
+<div class="module-cards">
+<section id="getting-started" class="level3 module-card">
+<h3 class="anchored" data-anchor-id="getting-started">Getting Started</h3>
+<p>Prerequisites, MIMIC-IV access, workspace setup, and EHR data overview.</p>
+<p><a href="./setup/index.html" class="card-link">Begin Setup →</a></p>
+</section>
+<section id="module-1-data-preprocessing" class="level3 module-card">
+<h3 class="anchored" data-anchor-id="module-1-data-preprocessing">Module 1: Data Preprocessing</h3>
+<p>Clean, normalize, and aggregate EHR data into analysis-ready patient-level feature matrices.</p>
+<p><strong>4 steps:</strong> Data Cleaning → Code Rollup → NLP → Cohort Creation</p>
+<p><a href="./module1/index.html" class="card-link">Start Tutorial →</a></p>
+</section>
+<section id="module-2-representation-learning" class="level3 module-card">
+<h3 class="anchored" data-anchor-id="module-2-representation-learning">Module 2: Representation Learning</h3>
+<p>Generate EHR embeddings using SVD-PMI and pre-trained language models (CODER, SapBERT, BioBERT).</p>
+<p><a href="./module2/index.html" class="card-link">View Module →</a></p>
+</section>
+<section id="module-3-harmonization" class="level3 module-card">
+<h3 class="anchored" data-anchor-id="module-3-harmonization">Module 3: Harmonization</h3>
+<p>Combine data from multiple institutions using the BONMI algorithm for unified embeddings.</p>
+<p><a href="./module3/index.html" class="card-link">View Module →</a></p>
+</section>
+<section id="function-reference" class="level3 module-card">
+<h3 class="anchored" data-anchor-id="function-reference">Function Reference</h3>
+<p>Complete API reference for all preprocessing and embedding functions.</p>
+<p><a href="./reference/index.html" class="card-link">Browse Functions →</a></p>
+</section>
+</div>
+<hr class="section-divider">
+</section>
+<section id="citation" class="level2">
+<h2 class="anchored" data-anchor-id="citation">Citation</h2>
+<p>If you use PEHRT in your research, please cite:</p>
+<blockquote class="blockquote">
+<p>Gronsbell, J. et al.&nbsp;“A Common Pipeline for Harmonizing Electronic Health Record Data for Translational Research.” <em>arXiv preprint</em> arXiv:2509.08553 (2025).</p>
+</blockquote>
+<hr class="section-divider">
+<div style="text-align: center; color: #888; font-size: 0.85rem; padding: 1rem 0;">
+<p>PEHRT is developed by the <a href="https://celehs.hms.harvard.edu/">CELEHS Lab</a> at Harvard Medical School.</p>
+</div>
 
 
 </section>

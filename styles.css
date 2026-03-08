@@ -1,1 +1,212 @@
-/* css styles */
+/* ===== PEHRT Custom Styles ===== */
+
+/* ----- Landing Page Hero ----- */
+.hero-banner {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  color: #ffffff;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.hero-banner h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.hero-banner .subtitle {
+  font-size: 1.1rem;
+  color: #b0c4de;
+  margin-bottom: 1.5rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-banner .btn-hero {
+  display: inline-block;
+  padding: 0.7rem 2rem;
+  background: #e94560;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.hero-banner .btn-hero:hover {
+  background: #c73e54;
+  color: #fff;
+}
+
+/* ----- Module Cards Grid ----- */
+.module-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.module-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1.5rem;
+  background: #ffffff;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.module-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.module-card h3 {
+  font-size: 1.1rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #0f3460;
+}
+
+.module-card p {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+}
+
+.module-card a.card-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.module-card a.card-link:hover {
+  text-decoration: underline;
+}
+
+/* ----- Step Numbering ----- */
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  color: #ffffff;
+  font-weight: 700;
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+/* ----- Pipeline Step Indicator ----- */
+.pipeline-step {
+  border-left: 3px solid #0d6efd;
+  padding-left: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ----- Function Signature Block ----- */
+.func-signature {
+  background: #f8f9fa;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid #198754;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.875rem;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 1rem;
+}
+
+/* ----- Sidebar Refinements ----- */
+.sidebar-title {
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.sidebar-item .sidebar-item-text {
+  font-size: 0.9rem;
+}
+
+/* ----- Table Styling ----- */
+.table {
+  font-size: 0.9rem;
+}
+
+.table thead th {
+  background: #f0f4f8;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}
+
+/* ----- Code Block Enhancements ----- */
+div.sourceCode {
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+pre.sourceCode {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ----- Callout Refinements ----- */
+.callout {
+  border-radius: 6px;
+  margin: 1.25rem 0;
+}
+
+.callout-title {
+  font-weight: 600;
+}
+
+/* ----- Content Width & Spacing ----- */
+.content {
+  max-width: 1000px;
+}
+
+#quarto-content > * {
+  line-height: 1.7;
+}
+
+/* ----- Navbar Polish ----- */
+.navbar {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ----- Feature List (Landing Page) ----- */
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.feature-list li {
+  padding: 0.4rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  font-size: 0.95rem;
+}
+
+.feature-list li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  color: #198754;
+  font-weight: 700;
+}
+
+/* ----- Section Dividers ----- */
+.section-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 2rem 0;
+}

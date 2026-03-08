@@ -433,7 +433,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="description" class="level2">
 <h2 class="anchored" data-anchor-id="description">Description</h2>
 <p>The <code>get_monthly_counts_relative_to_diagnoses</code> function calculates the monthly frequency of specified events relative to the first diagnosis date of a particular condition. It generates aggregated data files for each month within a specified range.</p>
-<div id="631201f3" class="cell">
+<div id="514b597b" class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_monthly_counts_relative_to_diagnoses(diag_filename, input_file, column_name ,output_folder, index_diagnoses_code, month_start, month_end):</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    diagnoses <span class="op">=</span> pd.read_csv(diag_filename, dtype<span class="op">=</span><span class="bu">str</span>)</span>

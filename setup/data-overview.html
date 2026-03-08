@@ -681,7 +681,7 @@ Important
 </div>
 <section id="patient-demographics" class="level3">
 <h3 class="anchored" data-anchor-id="patient-demographics">Patient Demographics</h3>
-<div id="47217b5d" class="cell">
+<div id="79dc2278" class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
@@ -704,7 +704,7 @@ Important
 3   10000068      F         19        2160       2008 - 2010         NaN
 4   10000084      M         72        2160       2017 - 2019  2161-02-13</code></pre>
 <p>There are <strong>364,627</strong> patients in the MIMIC-IV hospital dataset. Around <strong>52%</strong> of the cohort are female. Ages over 89 are depicted as 90+ to comply with HIPAA privacy regulations, and no age data exists for patients under 18.</p>
-<div id="7251c326" class="cell">
+<div id="36329a9f" class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>demographics.describe()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Missing records:"</span>, demographics.isna().<span class="bu">sum</span>())</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -737,7 +737,7 @@ Important
 <li><strong>ICD-10</strong>: starting <strong>October 1, 2015</strong></li>
 </ul>
 <p>The same diagnosis uses different codes depending on when it was recorded. For example, essential hypertension is <code>4019</code> under ICD-9 and <code>I10</code> under ICD-10.</p>
-<div id="8648d055" class="cell">
+<div id="b5cb1286" class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>diagnoses_icd_file <span class="op">=</span> os.path.join(WORKSPACE_DIR, <span class="st">"raw_data"</span>, <span class="st">"structured_data"</span>,</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"physionet.org"</span>, <span class="st">"files"</span>, <span class="st">"mimiciv"</span>, <span class="st">"3.1"</span>, <span class="st">"hosp"</span>, <span class="st">"diagnoses_icd.csv"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>diagnoses_icd <span class="op">=</span> pd.read_csv(diagnoses_icd_file, dtype<span class="op">=</span><span class="bu">str</span>)</span>
@@ -753,7 +753,7 @@ Important
 <section id="batch-summarization-function" class="level4">
 <h4 class="anchored" data-anchor-id="batch-summarization-function">Batch Summarization Function</h4>
 <p>For larger datasets (e.g., lab data with 158M+ rows), we define a batch summarization function:</p>
-<div id="4688a28b" class="cell">
+<div id="8f571a24" class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_basic_summary(filepath, cols_to_summarize, batch_size):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    frequencies <span class="op">=</span> defaultdict(<span class="kw">lambda</span>: defaultdict(<span class="bu">int</span>))</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    non_null_records_count <span class="op">=</span> defaultdict(<span class="bu">int</span>)</span>
@@ -780,7 +780,7 @@ Important
 <section id="patient-level-code-counts" class="level4">
 <h4 class="anchored" data-anchor-id="patient-level-code-counts">Patient-Level Code Counts</h4>
 <p>To estimate disease cohort size, count unique <code>(subject_id, icd_code)</code> pairs:</p>
-<div id="453b9f19" class="cell">
+<div id="689b27b4" class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>icd_counts <span class="op">=</span> (</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    diagnoses_icd</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .groupby([<span class="st">'icd_code'</span>, <span class="st">'icd_version'</span>], as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">'subject_id'</span>]</span>
@@ -813,7 +813,7 @@ ICD Version Transition
 <section id="data-dictionary-lookup" class="level4">
 <h4 class="anchored" data-anchor-id="data-dictionary-lookup">Data Dictionary Lookup</h4>
 <p>Joining with <code>d_icd_diagnoses</code> provides human-readable code descriptions:</p>
-<div id="8a3ee25c" class="cell">
+<div id="f7a65f42" class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>d_icd_path <span class="op">=</span> os.path.join(WORKSPACE_DIR, <span class="st">"raw_data"</span>, <span class="st">"structured_data"</span>,</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"physionet.org"</span>, <span class="st">"files"</span>, <span class="st">"mimiciv"</span>, <span class="st">"3.1"</span>, <span class="st">"hosp"</span>, <span class="st">"d_icd_diagnoses.csv"</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -838,7 +838,7 @@ ICD Version Transition
 <section id="reusable-summary-functions" class="level3">
 <h3 class="anchored" data-anchor-id="reusable-summary-functions">Reusable Summary Functions</h3>
 <p>We define two reusable functions for generating comprehensive summaries across all data types:</p>
-<div id="32640490" class="cell">
+<div id="9947bedc" class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate_wordcloud(sorted_freq_df, code_desc_column):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    word_freq <span class="op">=</span> {}</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index, row <span class="kw">in</span> sorted_freq_df.iterrows():</span>
